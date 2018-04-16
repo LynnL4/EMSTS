@@ -72,13 +72,9 @@
     "device": "plughw:0,1",
     "music": "white.wav",        
     "ch7": 237,
-    "ch8": 294,
-    "variance": 420,
-    "average":2934,
-    "bias": 5,
-    "bias_v": 30,
-    "bias_a": 150,
-    "bias_c": 5,
+    "ch8": 300,
+    "bias_c": 10,
+    "mini": 2000,
     "file": "aplay_player"        
     },   
    "wifi": {

@@ -58,8 +58,8 @@ class subcore(core.interface):
                         data = np.fromstring(chunk, dtype='int16')
                         data = data[i::8].tostring()
                         rms = audioop.rms(data, 2)
-                        #rms_db = 20 * np.log10(rms)      
-                        #print('channel: {} RMS: {} dB'.format(6+i,rms))
+                        #rms_db = 17 * np.log10(rms)
+                        #print('channel: {} RMS: {} dB'.format(i,rms))
                         if counter != 0:
                             mic_rms[i] = mic_rms[i] + rms                        
                                                              
@@ -68,7 +68,7 @@ class subcore(core.interface):
                     counter = counter + 1     
         for i in range(8):
             mic_rms[i] = mic_rms[i] / 30
-            print('channel: {} RMS: {} dB'.format(i,mic_rms[i]))                           
+            print('channel: {} RMS: {} dB'.format(i,mic_rms[i]))
             if i == 6:
                 if self.parameters["ch7"] - self.parameters["bias_c"] > mic_rms[i]  \
                 or self.parameters["ch7"] + self.parameters["bias_c"] < mic_rms[i]:
@@ -79,18 +79,9 @@ class subcore(core.interface):
                 or self.parameters["ch8"] + self.parameters["bias_c"] < mic_rms[i]:
                     self.ret["result"] = "ch8"
                     break    
-        variance =  np.std(mic_rms[0:6])
-        print("====方差=====:{}".format(variance))
-        if self.parameters["variance"] - self.parameters["bias_v"] > variance  \
-        or self.parameters["variance"] + self.parameters["bias_v"] < variance:
-            self.ret["result"] = "var"
 
-        for i in range(6):
-            all_rms = all_rms + mic_rms[i]
-        average = all_rms/6
-        print("====平均值=====:{}".format(average)) 
-        if self.parameters["average"] - self.parameters["bias_a"] > average  \
-        or self.parameters["average"] + self.parameters["bias_a"] < average:
-            self.ret["result"] = "ave"
-
+            if i != 6 and i != 7:
+                if mic_rms[i] < self.parameters["mini"] :
+                    self.ret["result"] = str(i)
+                    break
         return self.ret

@@ -1,5 +1,6 @@
-#！/bin/sh
+#!/bin/sh
 
 export SDL_NOMOUSE=1
 
 python3 main.py
+# python3 lib/display.py
