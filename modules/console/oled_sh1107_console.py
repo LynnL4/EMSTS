@@ -28,6 +28,11 @@ import math
 import struct
 import mraa as m
 
+'''
+parameters ->
+	oled_sh1107: 0 --- SSD1327 res:  96x96
+	oled_sh1107: 1 --- SH1107G res:128x128  (default)
+'''
 
 class console:
     def __init__(self,parameters,platform):    
@@ -35,7 +40,9 @@ class console:
         self.platform = platform
         self.t = True
 
-        self.line  = 0
+        self.is_sh1107 = self.parameters.get("oled_ssh1107", 1);
+        self.line = 0
+
         # initialise I2C
         self.x = m.I2c(0)
         self.x.address(0x3C)
@@ -146,50 +153,73 @@ class console:
         [0x00,0x02,0x01,0x01,0x02,0x01,0x00,0x00],
         [0x00,0x02,0x05,0x05,0x02,0x00,0x00,0x00]]
 
-        blk=[0xFD]       # Unlock OLED driver IC MCU interface from entering command. i.e: Accept commands
-        blk.append(0x12)
-        blk.append(0xAE) # Set display off
-        blk.append(0xA8) # set multiplex ratio
-        blk.append(0x5F) # 96
-        blk.append(0xA1) # set display start line
-        blk.append(0x00)
-        blk.append(0xA2) # set display offset
-        blk.append(0x60)
-        blk.append(0xA0) # set remap
-        blk.append(0x46)
-        blk.append(0xAB) # set vdd internal
-        blk.append(0x01) #
-        blk.append(0x81) # set contrasr
-        blk.append(0x53) # 100 nit
-        blk.append(0xB1) # Set Phase Length
-        blk.append(0X51) #
-        blk.append(0xB3) # Set Display Clock Divide Ratio/Oscillator Frequency
-        blk.append(0x01)
-        blk.append(0xB9) #
-        blk.append(0xBC) # set pre_charge voltage/VCOMH
-        blk.append(0x08) # (0x08)
-        blk.append(0xBE) # set VCOMH
-        blk.append(0X07) # (0x07)
-        blk.append(0xB6) # Set second pre-charge period
-        blk.append(0x01) #
-        blk.append(0xD5) # enable second precharge and enternal vsl
-        blk.append(0X62) # (0x62)
-        blk.append(0xA4) # Set Normal Display Mode
-        blk.append(0x2E) # Deactivate Scroll
-        blk.append(0xAF) # Switch on display
-        self.multi_comm(blk)
-        time.sleep(.1)
+        if self.is_sh1107:
+            blk = [0xAE]       # Display OFF
+            blk.append(0xD5)   # Set Dclk
+            blk.append(0x50)   # 100Hz
+            blk.append(0x20)   # Set row address
+            blk.append(0x81)   # Set contrast control
+            blk.append(0x80)
+            blk.append(0xA0)   # Segment remap
+            blk.append(0xA4)   # Set Entire Display ON 
+            blk.append(0xA6)   # Normal display
+            blk.append(0xAD)   # Set external VCC
+            blk.append(0x80)
+            blk.append(0xC0)   # Set Common scan direction
+            blk.append(0xD9)   # Set phase leghth
+            blk.append(0x1F)
+            blk.append(0xDB)   # Set Vcomh voltage
+            blk.append(0x27)
+            blk.append(0xAF)   #Display ON
+            blk.append(0xB0)
+            blk.append(0x00)
+            blk.append(0x10)
+        else:
+            blk=[0xFD]       # Unlock OLED driver IC MCU interface from entering command. i.e: Accept commands
+            blk.append(0x12)
+            blk.append(0xAE) # Set display off
+            blk.append(0xA8) # set multiplex ratio
+            blk.append(0x5F) # 96
+            blk.append(0xA1) # set display start line
+            blk.append(0x00)
+            blk.append(0xA2) # set display offset
+            blk.append(0x60)
+            blk.append(0xA0) # set remap
+            blk.append(0x46)
+            blk.append(0xAB) # set vdd internal
+            blk.append(0x01) #
+            blk.append(0x81) # set contrasr
+            blk.append(0x53) # 100 nit
+            blk.append(0xB1) # Set Phase Length
+            blk.append(0X51) #
+            blk.append(0xB3) # Set Display Clock Divide Ratio/Oscillator Frequency
+            blk.append(0x01)
+            blk.append(0xB9) #
+            blk.append(0xBC) # set pre_charge voltage/VCOMH
+            blk.append(0x08) # (0x08)
+            blk.append(0xBE) # set VCOMH
+            blk.append(0X07) # (0x07)
+            blk.append(0xB6) # Set second pre-charge period
+            blk.append(0x01) #
+            blk.append(0xD5) # enable second precharge and enternal vsl
+            blk.append(0X62) # (0x62)
+            blk.append(0xA4) # Set Normal Display Mode
+            blk.append(0x2E) # Deactivate Scroll
+            blk.append(0xAF) # Switch on display
+            self.multi_comm(blk)
+            time.sleep(.1)
 
-        # Row Address
-        blk=[0x75]       # Set Row Address
-        blk.append(0x00) # Start 0
-        blk.append(0x5f) # End 95
-        # Column Address
-        blk.append(0x15) # Set Column Address
-        blk.append(0x08) # Start from 8th Column of driver IC. This is 0th Column for OLED
-        blk.append(0x37) # End at  (8 + 47)th column. Each Column has 2 pixels(segments)
+            # Row Address
+            blk=[0x75]       # Set Row Address
+            blk.append(0x00) # Start 0
+            blk.append(0x5f) # End 95
+            # Column Address
+            blk.append(0x15) # Set Column Address
+            blk.append(0x08) # Start from 8th Column of driver IC. This is 0th Column for OLED
+            blk.append(0x37) # End at  (8 + 47)th column. Each Column has 2 pixels(segments)
         self.multi_comm(blk)
         self.oled_clearDisplay()
+
     def sendCommand(self,byte):
         try:
             self.x.writeReg(self.Command_Mode,byte)
@@ -209,31 +239,52 @@ class console:
             self.sendCommand(c)
 
     def oled_clearDisplay(self):
-        for j in range (0,48):
-            for i in range (0,96):
-                self.sendData(0x00)
+        if self.is_sh1107:
+            for i in range (0, 16):
+                self.sendCommand(0xB0 + i)
+                self.sendCommand(0x00)
+                self.sendCommand(0x10)
+                for j in range (0, 128):
+                    self.sendData(0x00)
+        else: 
+            for j in range (0,48):
+                for i in range (0,96):
+                    self.sendData(0x00)
 
     def oled_setNormalDisplay(self):
         self.sendCommand(self.Normal_Display_Cmd)
 
     def oled_setVerticalMode(self):
-        self.sendCommand(0xA0)    # remap to
-        self.sendCommand(0x46)    # Vertical mode
+        if self.is_sh1107:
+            self.sendCommand(0xA0)    # remap to
+            self.sendCommand(0xC0)    # Vertical mode
+        else:
+            self.sendCommand(0xA0)    # remap to
+            self.sendCommand(0x46)    # Vertical mode
 
     def oled_setTextXY(self,Row,Column):
-        self.sendCommand(0x15)             # Set Column Address
-        self.sendCommand(0x08+(Column*4))  # Start Column: Start from 8
-        self.sendCommand(0x37)             # End Column
-        # Row Address
-        self.sendCommand(0x75)             # Set Row Address
-        self.sendCommand(0x00+(Row*8))     # Start Row
-        self.sendCommand(0x07+(Row*8))     # End Row
+        if self.is_sh1107:
+            self.sendCommand(0xB0 + Row)
+            self.sendCommand(0x08 if Column % 2 else 0x00)
+            self.sendCommand(0x10 + (Column >> 1))
+        else:
+            self.sendCommand(0x15)             # Set Column Address
+            self.sendCommand(0x08+(Column*4))  # Start Column: Start from 8
+            self.sendCommand(0x37)             # End Column
+            # Row Address
+            self.sendCommand(0x75)             # Set Row Address
+            self.sendCommand(0x00+(Row*8))     # Start Row
+            self.sendCommand(0x07+(Row*8))     # End Row
 
     def oled_putChar(self,C):
         C_add=ord(C)
         if C_add<32 or C_add>127:     # Ignore non-printable ASCII characters
-            C=' '
-            C_add=ord(C)
+            C=ord(' ')
+
+        if self.is_sh1107:
+            for i in range(8):
+                self.sendData(self.BasicFont[C_add - 32][i])
+            return
 
         for i in range(0,8,2):
             for j in range(0,8):
@@ -287,3 +338,18 @@ class console:
             print("test succeed")
         else:
             print("test failed")
+
+
+if __name__ == "__main__":
+	con = console({}, "raspberrypi")
+	con.oled_clearDisplay()
+	# time.sleep(1)
+	con.oled_setTextXY(0, 0)
+	con.oled_putString("hello world!")
+	con.oled_setTextXY(0, 15)
+	con.oled_putChar('X')
+	time.sleep(1)
+	con.oled_setTextXY(15, 0)
+	for i in range(16):
+		con.oled_putChar(chr(ord('A') + i))
+
