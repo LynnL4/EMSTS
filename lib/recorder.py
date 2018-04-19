@@ -93,10 +93,12 @@ class recorder(object):
         self.start()
         return self
 
-    def __exit__(self, type, value, traceback):
-        if value:
-            return False
+    def __exit__(self, exc_type, exc_value, traceback):
         self.stop()
+        self.pyaudio_instance.close(self.stream)
+        if exc_type:
+            print("Exception ", exc_type, " :", exc_value)
+        return True
 
 
 if __name__ == '__main__':
@@ -121,4 +123,4 @@ if __name__ == '__main__':
                 print('channel: {} RMS: {} dB'.format(i,rms_db))
             if is_quit.is_set():
                 break
-        
+

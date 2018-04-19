@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# Author: turmary <turmary@126.com>
 # Author: Baozhu Zuo <zuobaozhu@gmail.com>
 # Copyright (c) 2018 Seeed Corporation.
 #
@@ -20,17 +21,14 @@
 # LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-from kernel import core
-import time
 import os
 import sys
+import time
 import threading
-from lib import recorder
-import numpy as np
 import audioop
-def play_music(p):
-    os.popen(" aplay -D " + p["device"] + " /opt/music/" + p["music"])
-
+import numpy as np
+from kernel import core
+from lib import recorder
 
 class subcore(core.interface):
     def __init__(self,parameters,platform,debug):
@@ -42,18 +40,19 @@ class subcore(core.interface):
             "description": self.parameters["description"],
             "result": "ok"
         }
+
     def do_test(self):
-        if self.platform == "respeaker v2":
-            os.system("arecord -d 1 -f S16_LE -r 16000 -Dhw:0,0 -c 8 /tmp/aaa.wav")
-        t = threading.Thread(target=play_music,args=(self.parameters,))
-        t.start()
+        # mute the speaker
+        if self.platform == "PiMicsArrayKit":
+            os.system("amixer -c " + str(self.parameters["card_nr"]) \
+                      + " cset numid=20,iface=MIXER,name='speaker volume' 0")
 
         counter = 0
         mic_rms = [0,0,0,0,0,0,0,0]
         all_rms = 0
         if self.platform == "respeaker v2" or self.platform == "PiMicsArrayKit":
             time.sleep(3)
-            
+
             with recorder.recorder(16000, 8, 16000 / 16)  as mic:
                 for chunk in mic.read_chunks():
                     for i in range(8):
@@ -63,27 +62,31 @@ class subcore(core.interface):
                         #rms_db = 17 * np.log10(rms)
                         #print('channel: {} RMS: {} dB'.format(i,rms))
                         if counter != 0:
-                            mic_rms[i] = mic_rms[i] + rms                        
-                                                             
+                            mic_rms[i] = mic_rms[i] + rms
                     if counter == 30:
                         break
                     counter = counter + 1
+                mic = None
+                del mic
         for i in range(8):
             mic_rms[i] = mic_rms[i] / 30
             print('channel: {} RMS: {} dB'.format(i, mic_rms[i]), file=sys.stderr)
             if i == 6:
-                if self.parameters["ch7"] - self.parameters["bias_c"] > mic_rms[i]  \
-                or self.parameters["ch7"] + self.parameters["bias_c"] < mic_rms[i]:
-                    self.ret["result"] = "ch7"  
+                if self.parameters["ch7_max"] < mic_rms[i]:
+                    self.ret["result"] = "ch7"
                     break
             elif i == 7:
-                if self.parameters["ch8"] - self.parameters["bias_c"] > mic_rms[i]  \
-                or self.parameters["ch8"] + self.parameters["bias_c"] < mic_rms[i]:
+                if self.parameters["ch8_max"] < mic_rms[i]:
                     self.ret["result"] = "ch8"
                     break
             else:
-                if mic_rms[i] < self.parameters["mini"] :
+                if mic_rms[i] > self.parameters["chx_max"] :
                     self.ret["result"] = str(i)
                     break
+
+        # unmute the speaker
+        if self.platform == "PiMicsArrayKit":
+            os.system("alsactl restore " + str(self.parameters["card_nr"]))
+
         return self.ret
 
