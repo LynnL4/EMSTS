@@ -21,7 +21,6 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-
 import sys
 import time
 import math
@@ -40,8 +39,10 @@ class console:
         self.platform = platform
         self.t = True
 
-        self.is_sh1107 = self.parameters.get("oled_ssh1107", 1);
+        self.is_sh1107 = self.parameters.get("oled_sh1107", 1);
+        # print("is_sh1107 {}".format(self.is_sh1107))
         self.line = 0
+        self.STATUS_LINE = 12
 
         # initialise I2C
         self.x = m.I2c(0)
@@ -54,6 +55,9 @@ class console:
         self.Data_mode=0x40
 
         self.Normal_Display_Cmd=0xA4
+        self.Reverse_Display_Cmd=0xA7
+        self.CmdDisplayOff = 0xAE
+        self.CmdDisplayOn  = 0xAF
 
         self.BasicFont = [[0 for x in range(8)] for x in range(10)]
         self.BasicFont=[[0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00],
@@ -254,6 +258,15 @@ class console:
     def oled_setNormalDisplay(self):
         self.sendCommand(self.Normal_Display_Cmd)
 
+    def oled_setReverseDisplay(self):
+        self.sendCommand(self.Reverse_Display_Cmd)
+
+    def oled_setDisplayOnOff(self, on_n_off):
+        if on_n_off:
+            self.sendCommand(self.CmdDisplayOn)
+        else:
+            self.sendCommand(self.CmdDisplayOff)
+
     def oled_setVerticalMode(self):
         if self.is_sh1107:
             self.sendCommand(0xA0)    # remap to
@@ -304,8 +317,12 @@ class console:
     def oled_putString(self,String):
         for i in range(len(String)):
             self.oled_putChar(String[i])
-        
 
+    def oled_putStatus(self, string):
+        self.oled_setTextXY(self.STATUS_LINE, 0)
+        self.oled_putString(" " * 16)
+        self.oled_setTextXY(self.STATUS_LINE, 0)
+        self.oled_putString(string)
 
     def log(self,*args):
         self.oled_setTextXY(self.line,0)
@@ -321,12 +338,12 @@ class console:
             elif a["result"] == "watch":
                 self.oled_setTextXY(self.line,7)
             else:
-                self.oled_setTextXY(self.line,5)
+                None
 
             self.oled_putString(a["result"])                              
 
         self.line = self.line+1
-        if self.line == 12 :
+        if self.line >= self.STATUS_LINE:
             self.oled_clearDisplay()
             self.line = 0
     def debug(self,*args):

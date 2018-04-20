@@ -66,8 +66,7 @@ class subcore(core.interface):
                     if counter == 30:
                         break
                     counter = counter + 1
-                mic = None
-                del mic
+
         for i in range(8):
             mic_rms[i] = mic_rms[i] / 30
             print('channel: {} RMS: {} dB'.format(i, mic_rms[i]), file=sys.stderr)
