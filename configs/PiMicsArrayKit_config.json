@@ -1,0 +1,69 @@
+{
+    "project": "PiMicsArrayKit",
+    "console": {
+        "file": "oled_sh1107_console",
+        "description": "log output",
+        "oled_sh1107": 1,
+        "device": "SCREEN"
+    },
+    "i2c": {
+        "file": "i2c_addrs",
+        "description": "I2C",
+        "busID": 1,
+        "addr_list": [26, 53, 59],
+        "addr_desc": "0x1A, 0x35, 0x3B",
+        "status": "okay",
+        "thread": "disabled"
+    },
+    "noise": {
+        "file": "silencing",
+        "description": "NOISE",
+        "card_nr": 1,
+        "chx_max": 100,
+        "ch7_max": 237,
+        "ch8_max": 300,
+        "period_min": 2,
+        "period_max": 5,
+        "status": "okay",
+        "thread": "disabled"
+    },
+    "speaker": {
+        "file": "aplay_player",
+        "description": "MIC",
+        "device": "plughw:1,0",
+        "music": "white.wav",
+        "ch7": 600,
+        "ch8": 2400,
+        "bias_c": 200,
+        "mini": 1100,
+        "status": "okay",
+        "thread": "disabled"
+    },
+    "headphone": {
+        "file": "headphone",
+        "description": "HP",
+        "device": "/dev/input/by-path/*i2c*",
+        "card_nr": 1,
+        "status": "okay",
+        "thread": "disabled"
+    },
+    "adc": {
+        "file":  "mraa_i2c_adc121c021",
+        "description": "3.3V",
+        "busID": 0,
+        "volts": 3.3,
+        "bias":  0.165,
+        "status": "okay",
+        "thread": "disabled"
+    },
+    "gpio":{
+        "file": "mraa_button",
+        "description": "BTN",
+        "input_io":[37],
+        "input_io_desc": "J1.37(gpio26)",
+        "output_io":[32,33],
+        "output_io_desc": "J1.32(gpio12),J1.33(gpio13)",
+        "status": "okay",
+        "thread": "disabled"
+    }
+}
