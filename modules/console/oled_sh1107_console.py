@@ -340,9 +340,9 @@ class console:
             else:
                 None
 
-            self.oled_putString(a["result"])                              
+            self.oled_putString(a["result"].upper())
 
-        self.line = self.line+1
+        self.line = self.line + (2 if self.platform == "PiMicsArrayKit" else 1)
         if self.line >= self.STATUS_LINE:
             self.oled_clearDisplay()
             self.line = 0
@@ -355,6 +355,9 @@ class console:
             print("test succeed")
         else:
             print("test failed")
+
+        # tell the caller exit the test loop
+        return True
 
 
 if __name__ == "__main__":

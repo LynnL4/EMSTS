@@ -51,17 +51,19 @@ if __name__ == "__main__":
     for i in jobs:
         if i.is_thread !=  "okay":
             ret = i.do_test()
-            if console_lock.acquire():
-                console.log(ret)
-                console_lock.release() 
+            while not console_lock.acquire():
+                time.sleep(0.1)
+            console.log(ret)
+            console_lock.release()
             if (ret["result"] != "ok" and ret["result"] != "listen" and ret["result"] != "watch") or e.wait(0.1):
-                print("xxxx")
+                print("join()")
                 for ii in ts:
-                    ii.join()               
+                    ii.join()
                 break
 
 
-    console.finish()
+    if console.finish():
+        quit()
     while True:
         time.sleep(1)
     #console.log("%o" % 20)
