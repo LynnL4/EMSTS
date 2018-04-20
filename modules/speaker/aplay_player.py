@@ -43,31 +43,34 @@ class subcore(core.interface):
             "result": "ok"
         }
     def do_test(self):
+        t = threading.Thread(target=play_music,args=(self.parameters,))
         if self.platform == "respeaker v2":
             os.system("arecord -d 1 -f S16_LE -r 16000 -Dhw:0,0 -c 8 /tmp/aaa.wav")
-        t = threading.Thread(target=play_music,args=(self.parameters,))
-        t.start()
+            t.start()
 
         counter = 0
         mic_rms = [0,0,0,0,0,0,0,0]
         all_rms = 0
-        if self.platform == "respeaker v2" or self.platform == "PiMicsArrayKit":
-            time.sleep(3)
+        if self.platform == "respeaker v2":   time.sleep(3)
+        if self.platform == "PiMicsArrayKit": time.sleep(0.5)
+
             
-            with recorder.recorder(16000, 8, 16000 / 16)  as mic:
-                for chunk in mic.read_chunks():
-                    for i in range(8):
-                        data = np.fromstring(chunk, dtype='int16')
-                        data = data[i::8].tostring()
-                        rms = audioop.rms(data, 2)
-                        #rms_db = 17 * np.log10(rms)
-                        #print('channel: {} RMS: {} dB'.format(i,rms))
-                        if counter != 0:
-                            mic_rms[i] = mic_rms[i] + rms                        
+        with recorder.recorder(16000, 8, 16000 / 16)  as mic:
+            if self.platform == "PiMicsArrayKit":
+                t.start()
+            for chunk in mic.read_chunks():
+                for i in range(8):
+                    data = np.fromstring(chunk, dtype='int16')
+                    data = data[i::8].tostring()
+                    rms = audioop.rms(data, 2)
+                    #rms_db = 17 * np.log10(rms)
+                    #print('channel: {} RMS: {} dB'.format(i,rms))
+                    if counter != 0:
+                        mic_rms[i] = mic_rms[i] + rms
                                                              
-                    if counter == 30:
-                        break
-                    counter = counter + 1
+                if counter == 30:
+                    break
+                counter = counter + 1
         for i in range(8):
             mic_rms[i] = mic_rms[i] / 30
             print('channel: {} RMS: {} dB'.format(i, mic_rms[i]), file=sys.stderr)
