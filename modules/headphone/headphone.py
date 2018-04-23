@@ -40,6 +40,7 @@ class subcore(core.interface):
             "description": self.parameters["description"],
             "result": "ok"
         }
+        self.timeout = self.parameters.get("timeout", None)
 
     def do_test(self):
         device = glob.glob(self.parameters["device"])
@@ -49,9 +50,15 @@ class subcore(core.interface):
         dev = evdev.device.InputDevice(device[0])
         # print(dev.capabilities(verbose=True, absinfo=True))
 
+        con = core.globaljob.getconsole()
+        con.oled_putStatus(str(self.timeout) + "S:INSERT HP")
+
         last_state = -1
         while last_state != 0:
-            r,w,x = select([dev], [], [])
+            r,w,x = select([dev], [], [], self.timeout)
+            if not len(r):
+                self.ret["result"] = "fail"
+                break
             for ev in dev.read():
                 print(ev)
                 if ev.type == evdev.ecodes.EV_SW and ev.code == evdev.ecodes.SW_HEADPHONE_INSERT:
@@ -64,6 +71,7 @@ class subcore(core.interface):
                             os.system("amixer -c " + str(self.parameters["card_nr"]) \
                                       + " cset numid=20,iface=MIXER,name='speaker volume' 0")
 
+        con.oled_putStatus("")
         # stop playing
         if self.platform == "PiMicsArrayKit":
             os.system("killall aplay")

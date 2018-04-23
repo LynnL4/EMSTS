@@ -39,10 +39,10 @@ class console:
         self.platform = platform
         self.t = True
 
-        self.is_sh1107 = self.parameters.get("oled_sh1107", 1);
+        self.is_sh1107 = self.parameters.get("oled_sh1107", 1)
         # print("is_sh1107 {}".format(self.is_sh1107))
         self.line = 0
-        self.STATUS_LINE = 12
+        self.STATUS_LINE = self.parameters.get("status_line", 13)
 
         # initialise I2C
         self.x = m.I2c(0)
@@ -350,7 +350,7 @@ class console:
         for a in args:
             print("debug: "+a)         
 
-    def finish(self):   
+    def finish(self):
         if self.t:
             print("test succeed")
         else:

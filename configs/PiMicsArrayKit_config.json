@@ -4,6 +4,7 @@
         "file": "oled_sh1107_console",
         "description": "log output",
         "oled_sh1107": 1,
+        "status_line": 15,
         "device": "SCREEN"
     },
     "i2c": {
@@ -44,6 +45,7 @@
         "description": "HP",
         "device": "/dev/input/by-path/*i2c*",
         "card_nr": 1,
+        "timeout": 8,
         "status": "okay",
         "thread": "disabled"
     },
@@ -63,6 +65,7 @@
         "input_io_desc": "J1.37(gpio26)",
         "output_io":[32,33],
         "output_io_desc": "J1.32(gpio12),J1.33(gpio13)",
+        "timeout": 8,
         "status": "okay",
         "thread": "disabled"
     }

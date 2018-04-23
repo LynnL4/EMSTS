@@ -42,6 +42,7 @@ class subcore(core.interface):
             "description": self.parameters["description"],
             "result": "ok"
         }
+        self.timeout = self.parameters.get("timeout", 6)
         self.input_io_group = []
         self.output_io_group = []
 
@@ -60,7 +61,7 @@ class subcore(core.interface):
 
     def do_test(self):
         con = core.globaljob.getconsole()
-        con.oled_putStatus("5S: PRESS BUTTON")
+        con.oled_putStatus(str(self.timeout) + "S:PRESS BUTTON")
 
         self.int = 0
         # button must be in high level before pressing
@@ -70,7 +71,7 @@ class subcore(core.interface):
                 return self.ret
             pin.isr(mraa.EDGE_FALLING, int_handler, self)
 
-        for i in range(5):
+        for i in range(self.timeout):
             for pin in self.output_io_group:
                 pin.write(1)
             con.oled_setDisplayOnOff(0)
