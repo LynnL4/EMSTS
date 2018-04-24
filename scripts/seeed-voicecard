@@ -82,6 +82,19 @@ alsactl restore
 #Fore 3.5mm ('headphone') jack
 amixer cset numid=3 1
 
+#select test configuration
+pushd /boot
+confs=(`ls PiMicsArrayKit*`)
+if [ ${#confs[@]} -ne 0 ]; then
+    conf=${confs[0]}
+else
+    conf=PiMicsArrayKit
+fi
+popd
+pushd /root/EMSTS
+cp configs/${conf}_config.json config.json
+popd
+
 pushd /root/4mics_hat
 rm -f handler-installed
 python3 pixels.py &

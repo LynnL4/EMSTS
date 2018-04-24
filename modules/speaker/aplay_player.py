@@ -41,10 +41,11 @@ class subcore(core.interface):
         self.debug  = debug
         self.ret = {
             "description": self.parameters["description"],
-            "result": "ok"
+            "result": ""
         }
         self.skip = self.parameters.get("skip", 1)
         self.loop = self.parameters.get("loop", 30)
+        self.min_list = self.parameters.get("min_list", None)
 
     def do_test(self):
         t = threading.Thread(target=play_music,args=(self.parameters,))
@@ -66,8 +67,8 @@ class subcore(core.interface):
                     data = np.fromstring(chunk, dtype='int16')
                     data = data[i::8].tostring()
                     rms = audioop.rms(data, 2)
-                    #rms_db = 17 * np.log10(rms)
-                    print('cnt: {} channel: {} RMS: {} dB'.format(counter, i, rms), file=sys.stderr)
+                    # rms_db = 17 * np.log10(rms)
+                    # print('cnt: {} channel: {} RMS: {} dB'.format(counter, i, rms), file=sys.stderr)
                     if counter >= self.skip:
                         mic_rms[i] = mic_rms[i] + rms
 
@@ -80,16 +81,17 @@ class subcore(core.interface):
             if i == 6:
                 if self.parameters["ch7"] - self.parameters["bias_c"] > mic_rms[i]  \
                 or self.parameters["ch7"] + self.parameters["bias_c"] < mic_rms[i]:
-                    self.ret["result"] = "ch7"  
-                    break
+                    self.ret["result"] = self.ret["result"] + "ch7"
             elif i == 7:
                 if self.parameters["ch8"] - self.parameters["bias_c"] > mic_rms[i]  \
                 or self.parameters["ch8"] + self.parameters["bias_c"] < mic_rms[i]:
-                    self.ret["result"] = "ch8"
-                    break
+                    self.ret["result"] = self.ret["result"] + "ch8"
+            elif self.min_list:
+                if mic_rms[i] < self.min_list[i]:
+                    self.ret["result"] = self.ret["result"] + str(i)
             else:
                 if mic_rms[i] < self.parameters["mini"] :
-                    self.ret["result"] = str(i)
-                    break
+                    self.ret["result"] = self.ret["result"] + str(i)
+        if self.ret["result"] == "": self.ret["result"] = "ok"
         return self.ret
 
