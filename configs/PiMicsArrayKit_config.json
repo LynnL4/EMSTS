@@ -16,27 +16,17 @@
         "status": "okay",
         "thread": "disabled"
     },
-    "noise": {
-        "file": "silencing",
-        "description": "NOISE",
-        "card_nr": 1,
-        "chx_max": 100,
-        "ch7_max": 237,
-        "ch8_max": 300,
-        "period_min": 2,
-        "period_max": 5,
-        "status": "okay",
-        "thread": "disabled"
-    },
     "speaker": {
         "file": "aplay_player",
         "description": "MIC",
         "device": "plughw:1,0",
         "music": "white.wav",
+        "skip": 6,
+        "loop": 30,
         "ch7": 600,
-        "ch8": 2400,
+        "ch8": 1200,
         "bias_c": 200,
-        "mini": 1100,
+        "mini": 900,
         "status": "okay",
         "thread": "disabled"
     },

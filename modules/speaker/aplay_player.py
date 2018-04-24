@@ -29,7 +29,8 @@ from lib import recorder
 import numpy as np
 import audioop
 def play_music(p):
-    os.popen(" aplay -D " + p["device"] + " /opt/music/" + p["music"])
+    os.system("alsactl restore 1")
+    os.popen("aplay -D " + p["device"] + " /opt/music/" + p["music"])
 
 
 class subcore(core.interface):
@@ -42,6 +43,9 @@ class subcore(core.interface):
             "description": self.parameters["description"],
             "result": "ok"
         }
+        self.skip = self.parameters.get("skip", 1)
+        self.loop = self.parameters.get("loop", 30)
+
     def do_test(self):
         t = threading.Thread(target=play_music,args=(self.parameters,))
         if self.platform == "respeaker v2":
@@ -50,29 +54,28 @@ class subcore(core.interface):
 
         counter = 0
         mic_rms = [0,0,0,0,0,0,0,0]
-        all_rms = 0
-        if self.platform == "respeaker v2":   time.sleep(3)
-        if self.platform == "PiMicsArrayKit": time.sleep(0.5)
 
-            
+        if self.platform == "respeaker v2":   time.sleep(3)
+
         with recorder.recorder(16000, 8, 16000 / 16)  as mic:
             if self.platform == "PiMicsArrayKit":
                 t.start()
+                time.sleep(1)
             for chunk in mic.read_chunks():
                 for i in range(8):
                     data = np.fromstring(chunk, dtype='int16')
                     data = data[i::8].tostring()
                     rms = audioop.rms(data, 2)
                     #rms_db = 17 * np.log10(rms)
-                    #print('channel: {} RMS: {} dB'.format(i,rms))
-                    if counter != 0:
+                    print('cnt: {} channel: {} RMS: {} dB'.format(counter, i, rms), file=sys.stderr)
+                    if counter >= self.skip:
                         mic_rms[i] = mic_rms[i] + rms
-                                                             
-                if counter == 30:
-                    break
+
                 counter = counter + 1
+                if counter >= self.skip + self.loop:
+                    break
         for i in range(8):
-            mic_rms[i] = mic_rms[i] / 30
+            mic_rms[i] = mic_rms[i] / self.loop
             print('channel: {} RMS: {} dB'.format(i, mic_rms[i]), file=sys.stderr)
             if i == 6:
                 if self.parameters["ch7"] - self.parameters["bias_c"] > mic_rms[i]  \
