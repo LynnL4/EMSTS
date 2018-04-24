@@ -80,17 +80,37 @@ fi
 alsactl restore
 
 #Fore 3.5mm ('headphone') jack
-amixer cset numid=3 1 
+amixer cset numid=3 1
+
+pushd /root/4mics_hat
+rm -f handler-installed
+python3 pixels.py &
+# wait handler installed
+while [ ! -e handler-installed ]; do
+    sleep 1
+done
+pid_led=$!
+popd
+
 
 while true; do
     wait_insert
+
+    # start led flashing
+    kill -s SIGUSR1 $pid_led
+    sleep 1
+    # stop  led flashing
+    ( sleep 6; kill -s SIGUSR2 $pid_led )&
+
     dtoverlay seeed-8mic-voicecard || true
 
     pushd /root/EMSTS
     ./start
     popd
 
+    killall aplay
     dtoverlay -r seeed-8mic-voicecard || true
+
     wait_leave
 done
 
