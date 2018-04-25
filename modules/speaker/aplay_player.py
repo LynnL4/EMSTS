@@ -62,6 +62,9 @@ class subcore(core.interface):
             if self.platform == "PiMicsArrayKit":
                 t.start()
                 time.sleep(1)
+                mic.stop()
+                time.sleep(0.2)
+                mic.start()
             for chunk in mic.read_chunks():
                 for i in range(8):
                     data = np.fromstring(chunk, dtype='int16')

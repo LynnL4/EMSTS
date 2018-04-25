@@ -41,19 +41,24 @@ class recorder(object):
         self.sample_rate = rate
         self.chunk_size = chunk_size if chunk_size else rate / 100
 
-        device_index = None
+        self.device_index = None
         for i in range(self.pyaudio_instance.get_device_count()):
             dev = self.pyaudio_instance.get_device_info_by_index(i)
             name = dev['name'].encode('utf-8')
             print(i, name, dev['maxInputChannels'], dev['maxOutputChannels'])
             if dev['maxInputChannels'] == self.channels:
                 print('Use {}'.format(name))
-                device_index = i
+                self.device_index = i
                 break
 
-        if device_index is None:
+        if self.device_index is None:
             raise Exception('can not find input device with {} channel(s)'.format(self.channels))
 
+    def _callback(self, in_data, frame_count, time_info, status):
+        self.queue.put(in_data)
+        return None, pyaudio.paContinue
+
+    def start(self):
         self.stream = self.pyaudio_instance.open(
             input=True,
             start=False,
@@ -62,14 +67,8 @@ class recorder(object):
             rate=int(self.sample_rate),
             frames_per_buffer=int(self.chunk_size),
             stream_callback=self._callback,
-            input_device_index=device_index,
+            input_device_index=self.device_index,
         )
-
-    def _callback(self, in_data, frame_count, time_info, status):
-        self.queue.put(in_data)
-        return None, pyaudio.paContinue
-
-    def start(self):
         self.queue.queue.clear()
         self.stream.start_stream()
 
@@ -87,6 +86,7 @@ class recorder(object):
     def stop(self):
         self.quit_event.set()
         self.stream.stop_stream()
+        self.pyaudio_instance.close(self.stream)
         self.queue.put('')
 
     def __enter__(self):
@@ -95,7 +95,6 @@ class recorder(object):
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.stop()
-        self.pyaudio_instance.close(self.stream)
         if exc_type:
             print("Exception ", exc_type, " :", exc_value)
         return True
