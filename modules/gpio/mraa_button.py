@@ -73,13 +73,13 @@ class subcore(core.interface):
 
         for i in range(self.timeout):
             for pin in self.output_io_group:
-                pin.write(1)
+                pin.write(pin.getPin() % 2)
             con.oled_setDisplayOnOff(0)
             if self.int: break
             time.sleep(0.5)
 
             for pin in self.output_io_group:
-                pin.write(0)
+                pin.write(1 - pin.getPin() % 2)
             con.oled_setDisplayOnOff(1)
             if self.int: break
             time.sleep(0.5)
