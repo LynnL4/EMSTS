@@ -112,8 +112,6 @@ while true; do
     # start led flashing
     kill -s SIGUSR1 $pid_led
     sleep 1
-    # stop  led flashing
-    ( sleep 6; kill -s SIGUSR2 $pid_led )&
 
     dtoverlay seeed-8mic-voicecard || true
 
@@ -125,6 +123,9 @@ while true; do
     dtoverlay -r seeed-8mic-voicecard || true
 
     wait_leave
+
+    # stop  led flashing
+    kill -s SIGUSR2 $pid_led
 done
 
 

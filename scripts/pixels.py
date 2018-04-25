@@ -9,12 +9,50 @@ try:
 except ImportError:
     import Queue as Queue
 
-from alexa_led_pattern import AlexaLedPattern
+
+class RGBLedPattern(object):
+    def __init__(self, show=None, number=12):
+        self.pixels_number = number
+        self.pixels = [0] * 4 * number
+
+        if not show or not callable(show):
+            def dummy(data):
+                pass
+            show = dummy
+
+        self.show = show
+        self.stop = False
+
+        self.COLOR_R = [0, 24,  0,  0] * self.pixels_number
+        self.COLOR_G = [0,  0, 24,  0] * self.pixels_number
+        self.COLOR_B = [0,  0,  0, 24] * self.pixels_number
+
+    def wakeup(self, direction=0):
+        pass
+
+    def listen(self):
+        pass
+
+    def think(self):
+        counter = 0
+        while not self.stop:
+            if counter == 0:  self.show(self.COLOR_R)
+            if counter == 10: self.show(self.COLOR_G)
+            if counter == 20: self.show(self.COLOR_B)
+            time.sleep(0.1)
+            counter = counter + 1
+            if counter >= 30: counter = 0
+
+    def speak(self):
+        pass
+
+    def off(self):
+        self.show([0] * 4 * 12)
 
 class Pixels:
     PIXELS_N = 12
 
-    def __init__(self, pattern=AlexaLedPattern):
+    def __init__(self, pattern=RGBLedPattern):
         self.pattern = pattern(show=self.show)
 
         self.dev = apa102.APA102(num_led=self.PIXELS_N)
@@ -98,9 +136,7 @@ if __name__ == '__main__':
 
         try:
             pixels.think()
-            time.sleep(1)
-            pixels.off()
-            time.sleep(0.2)
+            time.sleep(3)
         except KeyboardInterrupt:
             break
 
