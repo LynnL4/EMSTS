@@ -2,7 +2,7 @@
 import time
 import signal
 import threading
-import apa102
+from pixel_ring import apa102
 from gpiozero import LED
 try:
     import queue as Queue

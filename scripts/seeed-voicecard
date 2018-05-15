@@ -95,9 +95,9 @@ pushd /root/EMSTS
 cp configs/${conf}_config.json config.json
 popd
 
-pushd /root/4mics_hat
+pushd /root/pixel_ring
 rm -f handler-installed
-python3 pixels.py &
+python3 examples/rgb_pixels.py &
 # wait handler installed
 while [ ! -e handler-installed ]; do
     sleep 1
