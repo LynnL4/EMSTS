@@ -75,6 +75,7 @@ class subcore(core.interface):
         # stop playing
         if self.platform == "PiMicsArrayKit":
             os.system("killall aplay")
+            os.system("killall arecord")
 
         return self.ret
 
