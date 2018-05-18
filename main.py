@@ -41,6 +41,7 @@ if __name__ == "__main__":
     jobs = interfaces.getjobs()
     console = interfaces.getconsole()
     e = threading.Event()
+    exit_status = 0
     ts = []
     for j in jobs:
         if j.is_thread ==  "okay":
@@ -59,11 +60,12 @@ if __name__ == "__main__":
                 print("join()")
                 for ii in ts:
                     ii.join()
+                exit_status = 1
                 break
 
 
     if console.finish():
-        quit()
+        quit(exit_status)
     while True:
         time.sleep(1)
     #console.log("%o" % 20)

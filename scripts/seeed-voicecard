@@ -21,6 +21,7 @@
 # THE SOFTWARE.
 
 set -x
+exec 3>&1
 exec 1>/var/log/$(basename $0).log 2>&1
 #enable i2c interface
 dtparam i2c_arm=on
@@ -98,13 +99,15 @@ popd
 pushd /root/pixel_ring
 rm -f handler-installed
 python3 examples/rgb_pixels.py &
+pid_led=$!
 # wait handler installed
 while [ ! -e handler-installed ]; do
     sleep 1
 done
-pid_led=$!
 popd
 
+counter=0
+cnt_err=0
 
 while true; do
     wait_insert
@@ -116,16 +119,34 @@ while true; do
     dtoverlay seeed-8mic-voicecard || true
 
     pushd /root/EMSTS
-    ./start
+    if ! ./start; then
+        # log error times
+        cnt_err=$(( cnt_err + 1 ))
+        # break
+    fi
     popd
 
     killall aplay
+    sleep 1
     dtoverlay -r seeed-8mic-voicecard || true
 
     wait_leave
+    sleep 1
 
     # stop  led flashing
     kill -s SIGUSR2 $pid_led
+
+    counter=$(( counter + 1 ))
+    echo counter=$counter error=$cnt_err >&3
 done
 
+sudo sh -c "echo 00E0 > /sys/devices/platform/soc/3f804000.i2c/i2c-1/1-003b/ac108_debug/ac108"
+sudo sh -c "echo 00B6 > /sys/devices/platform/soc/3f804000.i2c/i2c-1/1-001a/ac101_debug/ac10x"
+
+killall arecord aplay
+kill -9 $pid_led
+sleep 1
+dtoverlay -r seeed-8mic-voicecard || true
+echo counter=$counter error=$cnt_err >&3
+exit 0
 
