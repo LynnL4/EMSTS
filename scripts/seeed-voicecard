@@ -106,6 +106,23 @@ while [ ! -e handler-installed ]; do
 done
 popd
 
+terminate() {
+    sudo sh -c "echo 00E0 > /sys/devices/platform/soc/3f804000.i2c/i2c-1/1-003b/ac108_debug/ac108"
+    sudo sh -c "echo 00B6 > /sys/devices/platform/soc/3f804000.i2c/i2c-1/1-001a/ac101_debug/ac10x"
+
+    killall arecord aplay
+    kill -9 $pid_led
+    sleep 1
+    dtoverlay -r seeed-8mic-voicecard || true
+
+    echo counter=$counter error=$cnt_err >&3
+
+    exit_status=${1:-1}
+    exit $exit_status
+}
+
+trap terminate INT
+
 counter=0
 cnt_err=0
 
@@ -126,6 +143,8 @@ while true; do
     fi
     popd
 
+    sleep 2
+
     killall aplay
     sleep 1
     dtoverlay -r seeed-8mic-voicecard || true
@@ -140,13 +159,5 @@ while true; do
     echo counter=$counter error=$cnt_err >&3
 done
 
-sudo sh -c "echo 00E0 > /sys/devices/platform/soc/3f804000.i2c/i2c-1/1-003b/ac108_debug/ac108"
-sudo sh -c "echo 00B6 > /sys/devices/platform/soc/3f804000.i2c/i2c-1/1-001a/ac101_debug/ac10x"
-
-killall arecord aplay
-kill -9 $pid_led
-sleep 1
-dtoverlay -r seeed-8mic-voicecard || true
-echo counter=$counter error=$cnt_err >&3
-exit 0
+terminate 0
 
