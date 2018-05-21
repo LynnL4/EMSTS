@@ -171,5 +171,6 @@ class subcore(core.interface):
 
         p = self.parameters
         self.t = threading.Thread(target=play_music,args=(p["device"], p["white"]))
+        self.t.start()
         return self.ret
 
