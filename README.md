@@ -8,6 +8,7 @@ apt install python3-pip python3-mraa  python3-upm python3-dev
 cd EMSTS
 ./start
 ```
+
 ### lib->display:
 ```
 sudo su
@@ -44,3 +45,30 @@ apt install python3-pexpect
 ```
 pip3 install pyserial
 ```
+
+
+## RaspberryPi
+### mraa library
+```
+apt-get install cmake swig
+cd;git clone https://github.com/intel-iot-devkit/mraa.git
+mkdir mraa/build; cd mraa/build
+cmake -D CMAKE_INSTALL_PREFIX=/usr ..
+make && make install
+```
+### seeed-voicecard
+```
+cd; git clone https://github.com/respeaker/seeed-voicecard.git
+./install.sh
+cp ~/EMSTS/scripts/seeed-voicecard /usr/bin/
+```
+### lib->snowboy
+```
+apt-get install python-pyaudio python3-pyaudio sox
+apt-get install libatlas-base-dev
+pip3 install pyaudio
+# snowboy library for python3
+git clone https://github.com/Kitt-AI/snowboy.git
+cd swig/Python3; make
+```
+
