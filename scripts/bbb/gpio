@@ -23,6 +23,7 @@ function gpio() {
     dir=in;;
   *)
     echo -e "Usage:\n  gpio input/set/clear gpio#"
+    return
     :;;
   esac
   echo $dir > $gpio_path/gpio$nr/direction

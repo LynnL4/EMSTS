@@ -1,5 +1,5 @@
 #!/bin/bash
-
+# pwm output script
 
 function usage() {
 	cat <<EOF

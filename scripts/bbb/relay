@@ -1,0 +1,25 @@
+#!/bin/bash
+
+. $(dirname $0)/gpio
+
+function sound() {
+	local relay_io=$1
+	local period=${2:-100} # milli second
+	local halfsleep=`echo "scale=2;$period/2000" | bc`
+	echo $halfsleep
+
+	for ((i = 0; i < $(( 1000 / period )); i++)); do
+		gpio set $relay_io
+		sleep $halfsleep
+		gpio clear $relay_io
+		sleep $halfsleep
+	done
+}
+
+while true; do
+	# relay 1 on GPIO0_22, 100ms/once
+	sound 22 100
+	# relay 2 on GPIO0_23, 200ms/once
+	sound 23 200
+done
+
