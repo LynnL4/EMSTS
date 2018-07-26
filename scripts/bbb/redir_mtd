@@ -1,0 +1,42 @@
+#!/bin/bash
+# tary, 12:28 2018/7/25
+
+dev=${1:-/dev/mtd0}
+f=`mktemp`
+# echo $f
+
+# clear content
+dd if=/dev/zero of=$dev status=none > /dev/null 2>&1
+
+# message 1
+msg="hello worldXXXXX"
+len=${#msg}
+# echo len=$len
+
+echo -ne "$msg" > $dev
+dd if=$dev of=$f count=$len iflag=count_bytes status=none
+v=$(cat $f)
+echo MSG=$v
+
+[ "$v" != "$msg" ] && {
+	rm -f $f
+	exit 1
+}
+
+# message 1
+msg="0123456789ABCDEF"
+len=${#msg}
+# echo len=$len
+
+echo -ne "$msg" > $dev
+dd if=$dev of=$f count=$len iflag=count_bytes status=none
+v=$(cat $f)
+echo MSG=$v
+
+[ "$v" != "$msg" ] && {
+	rm -f $f
+	exit 2
+}
+
+echo "========== OK =========="
+exit 0

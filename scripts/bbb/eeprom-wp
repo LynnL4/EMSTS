@@ -1,0 +1,21 @@
+#!/bin/bash
+# tary, 11:06 2018/7/25
+
+dev=${1:-/sys/devices/platform/ocp/44e0b000.i2c/i2c-0/0-0050/eeprom}
+wp=${2:-75}
+f=${3:-/bin/which}
+
+. $(dirname $0)/gpio
+
+# eeprom write protect enable
+gpio set $wp
+# must failed
+blkdev -o 1024 -b 512 $dev $f && { exit 1; }
+
+# eeprom write protect disable
+gpio clear $wp
+# must success
+blkdev -o 1024 -b 512 $dev $f || { exit 2; }
+
+echo "========== OK =========="
+exit 0

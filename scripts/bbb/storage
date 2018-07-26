@@ -1,0 +1,52 @@
+#!/bin/sh
+# tary, 9:56 2013-4-17
+
+[ $# -lt 2 ] && {
+	cat <<EOF
+Test a storage device such as u-disk, sd-card, sata-disk
+Syntax: $0 <mount point> <device list...>
+Examples:
+  1> u disk
+    $0 /mnt/udisk /dev/sda1 /dev/sdb1 /dev/sda /dev/sdb
+
+  2> sd/mmc card
+    $0 /mnt/card /dev/mmcblk0p1 /dev/mmcblk0 /dev/mmcblk1p1 /dev/mmcblk1
+
+  3> sata disk
+    $0 /mnt/sata /dev/sda5 /dev/sdb5
+EOF
+	exit 1
+}
+
+MOUNT_POINT=${1}
+shift
+DEV_LIST=$@
+
+# echo MOUNT_POINT=${MOUNT_POINT}
+# echo DEV_LIST=${DEV_LIST}
+
+{
+	umount ${MOUNT_POINT}
+	mkdir ${MOUNT_POINT}
+} >/dev/null 2>&1;
+
+for name in ${DEV_LIST}; do
+	umount $name >/dev/null 2>&1;
+done
+
+f_found=0
+for name in ${DEV_LIST}
+do
+	if mount -t vfat $name ${MOUNT_POINT} >/dev/null 2>&1; then
+		f_found=1
+		break
+	fi
+done
+
+[ "$f_found" -ne "0" ] || exit 1
+
+storage_tst -n 4 ${MOUNT_POINT}
+r=$?
+
+umount ${MOUNT_POINT} >/dev/null 2>&1;
+exit ${r}

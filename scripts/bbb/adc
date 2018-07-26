@@ -1,0 +1,20 @@
+#!/bin/bash
+# tary, 14:16 2018/7/25
+
+SYS_DIR=/sys/bus/iio/devices/iio\:device0
+
+cd $SYS_DIR
+
+echo "RAW0/mV0 RAW1/mV1 RAW2/mV2 RAW3/mV3"
+while true; do
+	r0=$(cat in_voltage0_raw)
+	r1=$(cat in_voltage1_raw)
+	r2=$(cat in_voltage2_raw)
+	r3=$(cat in_voltage3_raw)
+	Vin0=$(( r0 * 1800 / 4096 * 6 / 5 ))
+	Vin1=$(( r1 * 1800 / 4096 * 6 / 5 ))
+	Vin2=$(( r2 * 1800 / 4096 * 6 ))
+	Vin3=$(( r3 * 1800 / 4096 * 6 ))
+	echo $r0/$Vin0 $r1/$Vin1 $r2/$Vin2 $r3/$Vin3
+	sleep 1
+done

@@ -1,0 +1,90 @@
+#!/bin/sh
+# tary, 2015-02-10
+# test device such as /dev/block/*
+# Caution, maybe damage the data on target device!
+
+exec 1>&2
+
+blk_sz=1
+offset=0
+writes=0
+verifies=0
+unverify=0
+
+help_msg() {
+	echo "$0 [-b block size] [-o offset bytes] [-w write bytes ]";
+	echo "   [-v verify bytes] [-h] [-u] <dev_file> <file to write>";
+	echo "  block size default 1 byte"
+	echo "  offset bytes default 0"
+	echo "  write bytes default all file"
+	echo "  verify bytes default all file"
+	echo "    less or equal than write bytes"
+	echo "  -u not verify"
+	exit 1
+}
+
+while getopts "b:o:w:v:hu" opt; do
+	case $opt in
+	b)	blk_sz=$OPTARG;;
+	o)	offset=$OPTARG;;
+	w)	writes=$OPTARG;;
+	v)	verifies=$OPTARG;;
+	u)	unverify=1;;
+	h)	help_msg;;
+	esac
+done
+
+eval devf="\$$OPTIND"
+[ -z "$devf" -o ! -e "$devf" ] && {
+	echo "Error: invalid dev_file $devf!"
+	help_msg;
+}
+
+shift
+eval wrf="\$$OPTIND"
+[ -z "$wrf" -o ! -e "$wrf" ] && {
+	echo "Error: invalid <file to write> $wrf"
+	exit 2;
+}
+
+[ "$verifies" -eq 0 ] && verifies=$writes
+
+# echo $devf
+# echo $wrf
+
+fsize=`ls -l ${wrf} | awk '{ print $5 }'`
+# echo size=$fsize
+asize=$(( (($fsize - 1) / $blk_sz + 1) * $blk_sz ))
+# echo asize=$asize
+
+WR_CMD="dd if=$wrf of=$devf bs=$blk_sz"
+[ $offset -ne 0 ] && WR_CMD="${WR_CMD} seek=$(( $offset / $blk_sz ))" 
+[ $writes -ne 0 ] && WR_CMD="${WR_CMD} count=$(( $writes / $blk_sz ))"
+echo WR=$WR_CMD
+$WR_CMD
+[ $? -ne 0 ] && exit 3
+
+[ $unverify -ne 0 ] && exit 0
+
+[ $verifies -eq 0 ] && verifies=$fsize
+tmf=__`basename $wrf`
+TR_CMD="dd if=$wrf of=$tmf bs=$blk_sz"
+TR_CMD="${TR_CMD} count=$(( $verifies / $blk_sz ))"
+echo TR=$TR_CMD
+$TR_CMD
+[ $? -ne 0 ] && exit 4
+
+vrf=__v`basename $wrf`
+VR_CMD="dd if=$devf of=$vrf bs=$blk_sz"
+[ $offset -ne 0 ] && VR_CMD="${VR_CMD} skip=$(( $offset / $blk_sz ))"
+VR_CMD="${VR_CMD} count=$(( $verifies / $blk_sz ))"
+echo VR=$VR_CMD
+$VR_CMD
+[ $? -ne 0 ] && exit 5
+
+diff -q $vrf $tmf
+r=$?
+rm -f $vrf $tmf
+
+exit $r
+
