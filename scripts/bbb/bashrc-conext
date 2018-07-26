@@ -1,0 +1,93 @@
+# ~/.bashrc: executed by bash(1) for non-login shells.
+
+# Note: PS1 and umask are already set in /etc/profile. You should not
+# need this unless you want different defaults for root.
+# PS1='${debian_chroot:+($debian_chroot)}\h:\w\$ '
+# umask 022
+
+# You may uncomment the following lines if you want `ls' to be colorized:
+# export LS_OPTIONS='--color=auto'
+# eval "`dircolors`"
+# alias ls='ls $LS_OPTIONS'
+# alias ll='ls $LS_OPTIONS -l'
+# alias l='ls $LS_OPTIONS -lA'
+#
+# Some more alias to avoid making mistakes:
+# alias rm='rm -i'
+# alias cp='cp -i'
+# alias mv='mv -i'
+
+export PATH=/opt/EMSTS/scripts/bbb:$PATH; . gpio
+
+function emmc() {
+	blkdev -o 1048576 -b 512 /dev/mmcblk1 /bin/bash && echo "========== OK =========="
+}
+
+function usb() {
+	storage /media/1 /dev/sda1 && echo "========== OK =========="
+}
+
+function ether() {
+	ping www.china.com
+}
+
+function wl1807() {
+	ifconfig SoftAp0 | egrep "ether "
+}
+
+function fram() {
+	redir_mtd
+}
+
+function eeprom() {
+	eeprom-wp
+}
+
+function can() {
+	config-pin P9_19 can;config-pin P9_20 can;gpio set 81;can_pairs can0,can1 can0,can2 can1,can2
+}
+
+function rs485() {
+	gpio set 67; gpio set 69; tty_pairs ttyO1,ttyO4
+}
+
+function jumper() {
+	gpio_button JMP1-J10=72 JMP2-J9=86 JMP3-J8=88
+}
+
+function button() {
+	gpio_button RESET=19 SW2=104 SW3=103 SW4=18
+}
+
+function pwmtest() {
+	pwm 1 A 3 8000
+}
+
+function i2c() {
+	gpio set 60
+	i2cdetect -y -r 1 | egrep " 48 " && {
+		return 1;
+	}
+	gpio clear 60
+	i2cdetect -y -r 1 | egrep " 48 " || {
+		return 2;
+	}
+	echo "========== OK =========="
+}
+
+function rtcr() {
+	hwclock -r -f /dev/rtc1;date;
+}
+
+function rtcw() {
+	hwclock -w -f /dev/rtc1;
+}
+
+function dinput() {
+	while true; do echo $(gpio input 57;gpio input 59); sleep 1; done
+}
+
+function rst() {
+	gpio clear 19
+}
+
