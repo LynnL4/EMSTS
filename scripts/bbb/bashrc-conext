@@ -76,7 +76,7 @@ function i2c() {
 }
 
 function rtcr() {
-	hwclock -r -f /dev/rtc1;date;
+	hwclock -r -f /dev/rtc1;date +"%F %T.%N";
 }
 
 function rtcw() {
