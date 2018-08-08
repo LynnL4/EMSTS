@@ -1,0 +1,94 @@
+#!/bin/bash
+# tary, 2018-08-07
+
+source ~/.bashrc
+
+LED0="/sys/class/leds/beaglebone:green:usr0/brightness"
+LED1="/sys/class/leds/beaglebone:green:usr1/brightness"
+LED2="/sys/class/leds/beaglebone:green:usr2/brightness"
+LED3="/sys/class/leds/beaglebone:green:usr3/brightness"
+LED4="/sys/class/leds/beaglebone:green:usr4/brightness"
+LED5="/sys/class/leds/beaglebone:green:usr5/brightness"
+LED6="/sys/class/leds/beaglebone:green:usr6/brightness"
+
+function local_initial() {
+	echo "##### $0 Starting up #####"
+
+	killall sleep
+	sleep 1
+	pwm 1 A 1 1000
+	sleep 1
+	pwm 1 A 1000000 1000 &
+
+	# initial cat for can & rs485
+	killall cat
+
+	for i in $LED0 $LED1 $LED2 $LED3 $LED5 $LED6; do
+		echo 0 > $i
+		echo 1 > $i
+	done
+	while true; do
+		echo 1 > $LED4
+		sleep 1
+		echo 0 > $LED4
+		sleep 1
+	done &
+
+	sys_counter=0
+	while true; do
+		sysbench --num-threads=1 --max-requests=1000 --debug=on --test=cpu --cpu-max-prime=10000 run >/dev/null
+		echo sysbench-counter=$sys_counter
+		sys_counter=$(( sys_counter + 1 ))
+	done &
+}
+
+function local_loop() {
+	local rv
+
+	rv=0
+	msg=`ping -c 1 www.china.com`; r=$?
+	if [ $r -ne 0 ]; then
+		echo PING:$msg
+		rv=$(( rv + 1 ))
+	fi
+
+	msg=`can`; r=$?
+	if [ $r -ne 0 ]; then
+		echo CAN:$msg
+		rv=$(( rv + 1 ))
+	fi
+
+	msg=`rs485`; r=$?
+	if [ $r -ne 0 ]; then
+		echo RS485:$msg
+		rv=$(( rv + 1 ))
+	fi
+
+	msg=`storage /media/1 /dev/sda1 2>/dev/null`; r=$?
+	if [ $r -ne 0 ]; then
+		echo UDISK:$msg
+		rv=$(( rv + 1 ))
+	fi
+	return $rv
+}
+
+function local_intr() {
+	local logf
+
+	logf=$1
+	logbf=$(basename $logf)
+
+	echo DATE:`date`
+	LAST_PWD=$OLDPWD
+
+cat <<'disable-lines-end'
+	# commit logs
+	cd /opt/logs
+	cp $logf $logbf
+	git pull origin
+	git add $logbf
+	git commit -m "`date`: $logbf"
+	git push origin
+	cd $LAST_PWD
+disable-lines-end
+}

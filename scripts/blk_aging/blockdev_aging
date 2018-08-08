@@ -1,0 +1,88 @@
+#!/bin/bash
+#tary, 19:40 2018/8/7
+
+# set -x
+
+[ -f $0.local ] && . $0.local
+
+logf=/var/log/$(basename $0).log
+interval=1
+
+help_msg() {
+	echo "$0 [-l log_file] [-i interval ] [-c] [-h] <dev_file> <file to write>";
+	echo "  log_file default to $logf"
+	echo "  -c clear log"
+	echo "  interval default 1 \(minute\)"
+	exit 1
+}
+
+while getopts "l:ci:h" opt; do
+	case $opt in
+	l)	logf=$OPTARG;;
+	c)	echo > $logf;;
+	i)	interval=$OPTARG;;
+	h)	help_msg;;
+	esac
+done
+
+eval devf="\$$OPTIND"
+[ -z "$devf" -o ! -e "$devf" ] && {
+	echo "Error: invalid dev_file $devf!"
+	help_msg;
+}
+
+shift
+eval wrf="\$$OPTIND"
+[ -z "$wrf" -o ! -e "$wrf" ] && {
+	echo "Error: invalid <file to write> $wrf"
+	exit 2;
+}
+
+echo "logfile: ${logf}"
+echo "interval: ${interval} minutes"
+
+# interval=$(( $interval * 3 ))
+interval=$(( $interval * 60 ))
+
+
+if [ "`type -t local_initial 2>/dev/null`" = "function" ]; then
+	local_initial $logf >> $logf
+fi
+
+# wrf=x
+seconds=0
+while true; do
+	msg=
+	r=0
+	if [ "`type -t local_loop 2>/dev/null`" = "function" ]; then
+		msg=`local_loop $logf`; r=$?; echo $msg
+	fi
+
+	# msg=`./blkdev -b 512 $devf $wrf 2>&1`;r=$?;echo $msg
+	# msg=`blkdev -b 512 $devf $wrf 2>&1`;r=$?;echo $msg
+
+	if [ $r -ne 0 ]; then
+		{
+		echo DATE:`date`
+		echo ERR: $r
+		echo MSG:
+		echo $msg
+		echo
+		echo
+		} >> $logf
+	fi
+
+	current=`date +"%s"`
+	if [ "$current" -ge "$seconds" ]; then
+		seconds=$(( current + interval ))
+
+		if [ "`type -t local_intr 2>/dev/null`" = "function" ]; then
+			local_intr $logf >> $logf
+		fi
+	fi
+	# sleep $interval
+	sleep 1
+done
+
+exit 0
+
