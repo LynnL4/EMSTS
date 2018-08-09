@@ -81,14 +81,16 @@ function local_intr() {
 	echo DATE:`date`
 	LAST_PWD=$OLDPWD
 
-cat <<'disable-lines-end'
+: <<'comment-lines-end'
 	# commit logs
 	cd /opt/logs
-	cp $logf $logbf
 	git pull origin
+
+	cp $logf $logbf
 	git add $logbf
 	git commit -m "`date`: $logbf"
 	git push origin
+
 	cd $LAST_PWD
-disable-lines-end
+comment-lines-end
 }
