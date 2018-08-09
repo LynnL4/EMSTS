@@ -1,0 +1,22 @@
+
+function get_root_dev() {
+	local fields
+
+	while read line; do
+		fields=( $line )
+		if [ "${fields[2]}" == "/" ]; then
+			break
+		fi
+	done < <(mount)
+	echo ${fields[0]} | sed -re 's/p[0-9]+$//g'
+	return 0
+}
+
+function get_gateway() {
+	local inf
+
+	inf=${1:-eth0}
+	route -n | grep $inf | grep "UG " | awk '{print $2}'
+	return 0
+}
+
