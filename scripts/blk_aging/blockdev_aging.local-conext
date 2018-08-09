@@ -69,6 +69,12 @@ function local_loop() {
 		echo UDISK:$msg
 		rv=$(( rv + 1 ))
 	fi
+
+	msg=`storage /media/1 /dev/mmcblk0p1 2>/dev/null`; r=$?
+	if [ $r -ne 0 ]; then
+		echo SDCARD:$msg
+		rv=$(( rv + 1 ))
+	fi
 	return $rv
 }
 

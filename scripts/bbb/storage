@@ -37,7 +37,7 @@ done
 f_found=0
 for name in ${DEV_LIST}
 do
-	if mount -t vfat $name ${MOUNT_POINT} >/dev/null 2>&1; then
+	if mount $name ${MOUNT_POINT} >/dev/null 2>&1; then
 		f_found=1
 		break
 	fi
