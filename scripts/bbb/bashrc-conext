@@ -60,6 +60,7 @@ function button() {
 }
 
 function pwmtest() {
+	gpio set 9
 	pwm 1 A 3 8000
 }
 
@@ -76,7 +77,9 @@ function i2c() {
 }
 
 function rtcr() {
-	hwclock -r -f /dev/rtc1;date +"%F %T.%N";
+	# hwclock -r -f /dev/rtc1;
+	date +"%F %T.%N";
+	hwclock -c -f /dev/rtc1;
 }
 
 function rtcw() {
