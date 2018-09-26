@@ -78,13 +78,17 @@ dev_setup() {
 	local dev=$1
 	local baud=${2:-50000}
 
-	ip link set $dev down
-	ip link set $dev type can bitrate 50000
-	ip link set $dev up
 	sleep 0.1
-	ifconfig $dev | egrep "RUNNING" > /dev/null || {
-		ip link set $dev up
-	}
+	ip link set $dev down
+	sleep 0.1
+	ip link set $dev type can bitrate 50000
+	for ((i = 0; i < 10; i++)); do
+		sleep 0.1
+		if ip link set $dev up; then
+			break
+		fi
+	done
+
 	return
 }
 
