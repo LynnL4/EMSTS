@@ -16,6 +16,8 @@ function local_initial() {
 
 	killall sleep
 	sleep 1
+
+	gpio set 9
 	pwm 1 A 1 1000
 	sleep 1
 	pwm 1 A 1000000 1000 &
@@ -32,6 +34,16 @@ function local_initial() {
 		sleep 1
 		echo 0 > $LED4
 		sleep 1
+	done &
+
+	# relay
+	while true; do
+		gpio set 22
+		gpio set 23
+		sleep 3
+		gpio clear 22
+		gpio clear 23
+		sleep 3
 	done &
 
 	sys_counter=0

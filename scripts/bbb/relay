@@ -2,24 +2,28 @@
 
 . $(dirname $0)/gpio
 
-function sound() {
-	local relay_io=$1
-	local period=${2:-100} # milli second
-	local halfsleep=`echo "scale=2;$period/2000" | bc`
-	echo $halfsleep
+period=${1:-100} # milli second
 
-	for ((i = 0; i < $(( 1000 / period )); i++)); do
-		gpio set $relay_io
-		sleep $halfsleep
-		gpio clear $relay_io
-		sleep $halfsleep
+function sound() {
+	local _relay_io=$1
+	local _period=${2:-100} # milli second
+	local _halfsleep=`echo "scale=2;$_period/2000" | bc`
+	local i
+
+	echo $_halfsleep
+
+	for ((i = 0; i < $(( 1000 / _period )); i++)); do
+		gpio set $_relay_io
+		sleep $_halfsleep
+		gpio clear $_relay_io
+		sleep $_halfsleep
 	done
 }
 
 while true; do
 	# relay 1 on GPIO0_22, 100ms/once
-	sound 22 100
+	sound 22 $period
 	# relay 2 on GPIO0_23, 200ms/once
-	sound 23 200
+	sound 23 $(( period * 2 ))
 done
 
