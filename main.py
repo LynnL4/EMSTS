@@ -45,7 +45,7 @@ if __name__ == "__main__":
     ts = []
     for j in jobs:
         if j.is_thread ==  "okay":
-            t =threading.Thread(target=do_thread,args=(j.do_test,console,e,))
+            t = threading.Thread(target=do_thread,args=(j.do_test,console,e,))
             t.start()
             ts.append(t)
 

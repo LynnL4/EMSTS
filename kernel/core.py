@@ -45,21 +45,25 @@ class mainjob:
         self.json_data = json.load(open("config.json",'r'), object_pairs_hook=OrderedDict)
         self.interfaces = []
         print(self.json_data)
-        self.console =  importlib.import_module("modules.console." + self.json_data["console"]["file"])\
-	    .console(self.json_data["console"], self.json_data["project"])
+        self.console = importlib.import_module(
+                            "modules.console." + self.json_data["console"]["file"]
+                        ).console(self.json_data["console"], self.json_data["project"])
 
         globaljob = self
 
     def getjobs(self):
         for j in self.json_data:
-            if j != "project" and j != "console":
-                if self.json_data[j]["status"] == "okay":
-                    self.interfaces.append(importlib.import_module("modules."+j+"."+ self.json_data[j]["file"])\
-                                                                .subcore(self.json_data[j],\
-                                                                self.json_data["project"],\
-                                                                self.console.debug)\
-                                                                )
+            if j == "project" or j == "console":
+                continue
+            if self.json_data[j]["status"] == "okay":
+                module = self.json_data[j].get("module", j)
+                self.interfaces.append(importlib.import_module(
+                    "modules." + module + "." + self.json_data[j]["file"]
+                ).subcore(
+                    self.json_data[j], self.json_data["project"], self.console.debug
+                ))
         return self.interfaces
+
     def getconsole(self):
         return self.console
 
