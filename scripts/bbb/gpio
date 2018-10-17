@@ -45,7 +45,10 @@ function gpio() {
 
 # command
 # gpio args
-if [ "$(basename '$0')" == "gpio" -a "$1" != "" ]; then
-  gpio $@
+if [ "${0:0:1}" != "-" ]; then
+  if [ $(basename "$0") == "gpio" -a "$1" != "" ]; then
+    # echo gpio $@
+    gpio $@
+  fi
 fi
 
