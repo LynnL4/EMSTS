@@ -1,4 +1,12 @@
+#!/bin/bash
+# set -x
+#
+# gpio could be a function or a command
+# they have the same usage.
 
+# function
+# source gpio
+# gpio args
 function gpio() {
   local gpio_path=/sys/class/gpio
   local nr=$2
@@ -34,4 +42,10 @@ function gpio() {
   fi
   return
 }
+
+# command
+# gpio args
+if [ "$(basename '$0')" == "gpio" -a "$1" != "" ]; then
+  gpio $@
+fi
 
