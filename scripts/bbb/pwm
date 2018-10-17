@@ -55,6 +55,7 @@ echo $(( period / 2 )) > duty_cycle
 
 # output for a while
 echo 1 > enable
+[ "$duration" == "u" ] && { exit 0; }
 sleep $duration
 echo 0 > enable
 

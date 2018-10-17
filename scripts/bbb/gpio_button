@@ -4,8 +4,14 @@
 # set -x;
 
 [ "$#" -eq 0 -o "$1" == "-h" -o "$1" == "--help" ] && {
-	echo $0 KEY1=CODE1 KEY2=CODE2 ...;
+	echo $0 [-t timeout] KEY1=CODE1 KEY2=CODE2 ...;
 	exit 1;
+}
+
+timeout=1000000
+[ "$1" == "-t" ] && {
+	timeout=$(( $2 * 10 ))
+	shift;shift;
 }
 
 #: ${KEY_EVT_FILE:=/dev/input/event0}
@@ -33,14 +39,18 @@ function get_field() {
 function wait_code_value() {
 	local c=$1
 	local v=$2
+	local i
 
-	while true; do
+	for (( i = 0; i < $timeout; i++ )); do
 		set `gpio input $c`
 		if [ $v -eq $1 ]; then
 			break
 		fi
 		sleep 0.1
 	done
+	if (( i >= $timeout )); then
+		exit 1
+	fi
 }
 
 function single_key_test() {
