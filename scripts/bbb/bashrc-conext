@@ -6,9 +6,9 @@
 # umask 022
 
 # You may uncomment the following lines if you want `ls' to be colorized:
-# export LS_OPTIONS='--color=auto'
+export LS_OPTIONS='--color=auto'
 # eval "`dircolors`"
-# alias ls='ls $LS_OPTIONS'
+alias ls='ls $LS_OPTIONS'
 # alias ll='ls $LS_OPTIONS -l'
 # alias l='ls $LS_OPTIONS -lA'
 #
@@ -17,7 +17,7 @@
 # alias cp='cp -i'
 # alias mv='mv -i'
 
-export PATH=/opt/EMSTS/scripts/bbb:$PATH; . gpio
+export PATH=/opt/EMSTS/scripts/bbb:$PATH;
 
 function emmc() {
 	blkdev -o 1048576 -b 512 /dev/mmcblk1 /bin/bash && echo "========== OK =========="

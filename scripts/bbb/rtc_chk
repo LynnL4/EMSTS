@@ -1,0 +1,58 @@
+#!/bin/bash
+# tary, 2018-10-17 20:46
+
+RTC_DEV=${1:-/dev/rtc1}
+CONST_DATE=${2:-2018-10-01}
+DIFF_SECS=${3:-3}
+
+# echo RTC_DEV=@${RTC_DEV}@
+rtc_date=$(hwclock -r -f $RTC_DEV)
+
+# RTC date start with CONST_DATE
+if ! [[ $rtc_date =~ ^$CONST_DATE ]]; then
+	exit 1
+fi
+
+function test_rtc() {
+	local begs ends difs
+	local i now
+	
+	echo -ne "RTC Test"
+
+	# hardware time
+	now=`hwclock -r -f $RTC_DEV`; # echo $now;
+	begs=$(date -d "$now" +%s)
+	echo -n "."
+	for (( i = 0; i < $DIFF_SECS; i++ )); do
+		sleep 1
+		echo -n "."
+	done
+
+	# hardware time
+	now=`hwclock -r -f $RTC_DEV`; # echo $now;
+	ends=$(date -d "$now" +%s)
+
+	difs=$(expr "${ends}" - "${begs}")
+	if [ "${difs}" -lt "$DIFF_SECS" -o "${difs}" -gt "$(( DIFF_SECS + 2))" ]; then
+		echo -e "\rRTC Test: ERROR"
+		return 1;
+	fi
+
+	echo -e "\rRTC Test: OK"
+	return 0
+}
+
+# the flag written in U-Boot and defined in /uEnv.txt
+function erase_rtcw_flag() {
+	gpio clear 75
+	eeprom=/sys/devices/platform/ocp/44e0b000.i2c/i2c-0/0-0050/eeprom
+	file_erased=`mktemp`
+	echo -ne "\xFF\xFF\xFF\xFF" > $file_erased
+	dd if=$file_erased of=$eeprom bs=1 seek=256
+}
+
+test_rtc;r=$?
+erase_rtcw_flag > /dev/null 2>&1
+
+exit $r
+
