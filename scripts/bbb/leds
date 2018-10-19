@@ -1,0 +1,112 @@
+#!/bin/bash
+
+# default seconds number if unspecified
+flash_secs=3
+
+filter=""
+_period=1000 # milli second
+
+while getopts "t:f:h:p:" opt; do
+	case $opt in
+	t)	flash_secs=$OPTARG;;
+	f)	filter=$OPTARG;;
+	p)	_period=$OPTARG;;
+	h)	echo $0 -t flash_seconds -f filters -h;
+		exit 1;;
+	esac
+done
+
+eval index="\$$OPTIND"
+shift
+eval value="\$$OPTIND"
+
+[ "$filter" ] && filter="$filter|"
+
+# echo flash_secs=$flash_secs
+# echo filter=$filter
+# echo index=$index
+# echo value=$value
+
+leds_path="/sys/class/leds/"
+# leds=`find $leds_path -print | egrep -v "${filter}${leds_path}$"`
+leds_array=(                    \
+       "beaglebone:green:usr6"  \
+       "beaglebone:green:usr5"  \
+       "beaglebone:green:usr0"  \
+       "beaglebone:green:usr1"  \
+       "beaglebone:green:usr2"  \
+       "beaglebone:green:usr3"  \
+       "beaglebone:green:usr4"  \
+       )
+leds=${leds_array[@]}
+
+leds_off()
+{
+	for x in $leds; do
+		echo 0 > $x/brightness
+	done
+}
+
+leds_on()
+{
+	for x in $leds; do
+		echo 1 > $x/brightness
+	done
+}
+
+leds_trigger_none()
+{
+	for x in $leds; do
+		echo none > $x/trigger
+	done
+}
+
+leds_dispaly()
+{
+	for x in $leds; do
+		:
+	done
+}
+
+cd $leds_path
+leds_trigger_none
+_halfsleep=`echo "scale=2;$_period/2000" | bc`
+flash_cnt=$(( flash_secs * 1000 / $_period ))
+
+if [ "$index" == "" -a "$value" == "" ]; then
+	for ((i = 0; i < ${flash_cnt}; i++)); do
+		leds_on
+		sleep $_halfsleep
+		leds_off
+		sleep $_halfsleep
+	done
+	exit 0
+fi
+
+
+[ "$value" ] || value=1
+[ "$value" == "on" -o "$value" == "ON" ] && value=1
+[ "$value" == "off" -o "$value" == "OFF" ] && value=0
+
+if [ "$index" == "all" -o "$index" == "ALL" ]; then
+
+	for x in $leds; do
+		echo $value > $x/brightness
+	done
+fi
+
+if [ "$index" != "" -a "$value" == "" ]; then
+	for ((i = 0; i < ${flash_cnt}; i++)); do
+		echo 1 > ${leds_array[$index]}/brightness
+		sleep $_halfsleep
+		echo 0 > ${leds_array[$index]}/brightness
+		sleep $_halfsleep
+	done
+	exit 0
+
+elif [ "$value" != "" ]; then
+	echo $value > ${leds_array[$index]}/brightness
+fi
+
+exit 0
+
