@@ -8,16 +8,17 @@ DIFF_SECS=${3:-3}
 # echo RTC_DEV=@${RTC_DEV}@
 rtc_date=$(hwclock -r -f $RTC_DEV)
 
-# RTC date start with CONST_DATE
-if ! [[ $rtc_date =~ ^$CONST_DATE ]]; then
-	exit 1
-fi
 
 function test_rtc() {
 	local begs ends difs
 	local i now
 	
 	echo -ne "RTC Test"
+
+	# RTC date start with CONST_DATE
+	if ! [[ $rtc_date =~ ^$CONST_DATE ]]; then
+		return 1
+	fi
 
 	# hardware time
 	now=`hwclock -r -f $RTC_DEV`; # echo $now;
@@ -35,7 +36,7 @@ function test_rtc() {
 	difs=$(expr "${ends}" - "${begs}")
 	if [ "${difs}" -lt "$DIFF_SECS" -o "${difs}" -gt "$(( DIFF_SECS + 2))" ]; then
 		echo -e "\rRTC Test: ERROR"
-		return 1;
+		return 2;
 	fi
 
 	echo -e "\rRTC Test: OK"
@@ -49,6 +50,9 @@ function erase_rtcw_flag() {
 	file_erased=`mktemp`
 	echo -ne "\xFF\xFF\xFF\xFF" > $file_erased
 	dd if=$file_erased of=$eeprom bs=1 seek=256
+	sync
+	sync
+	sync
 }
 
 test_rtc;r=$?
