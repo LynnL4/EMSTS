@@ -1,0 +1,46 @@
+#!/bin/bash
+
+# 2.55v
+THRD_VOLT=255
+
+# Remove conection between double RS485s
+echo "P 3 10 0" | serial_rw.py > /dev/null
+
+echo "Debug only" >&2
+exit 0
+
+
+function voltage_get() {
+	local s12 s13 s14
+
+	# multiple lines result
+	status=$(echo "P 9 1" | serial_rw.py)
+	# Ohm120 Set High
+	# Q14:2.05,2.05
+	# Q13:2.05,2.05
+	# Q12:2.05,2.23
+	# Ohm120 Set LOW
+
+	# echo status=@${status}@
+	s14=$(echo "$status" | sed -nr 's/Q14:[^,]*,(.*)$/\1/gp' | tr '\r' '\n')
+	s13=$(echo "$status" | sed -nr 's/Q13:[^,]*,(.*)$/\1/gp' | tr '\r' '\n')
+	s12=$(echo "$status" | sed -nr 's/Q12:[^,]*,(.*)$/\1/gp' | tr '\r' '\n')
+
+	Q14=$(printf "%.f" `echo "${s14} * 100" | bc`)
+	Q13=$(printf "%.f" `echo "${s13} * 100" | bc`)
+	Q12=$(printf "%.f" `echo "${s12} * 100" | bc`)
+
+	echo Q14=$Q14 Q13=$Q13 Q12=$Q12
+}
+
+
+gpio set 67; gpio set 69; gpio set 81
+voltage_get
+# [ "$Q14" -gt $THRD_VOLT  -a  "$Q13" -gt $THRD_VOLT  -a  "$Q12" -gt $THRD_VOLT ] || { exit 1; }
+
+gpio clear 67; gpio clear 69; gpio clear 81
+voltage_get
+[ "$Q14" -gt $THRD_VOLT  -a  "$Q13" -gt $THRD_VOLT  -a  "$Q12" -gt $THRD_VOLT ] || { exit 2; }
+
+exit 0
+

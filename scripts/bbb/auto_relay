@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# relay 1 on GPIO0_22
+PIN_RLY1=22
+# relay 2 on GPIO0_23
+PIN_RLY2=23
+
+# Bug of MCU firmware on the other End of Serial
+echo "P 3 4 1" | serial_rw.py
+
+gpio set $PIN_RLY1
+gpio clear $PIN_RLY2
+status=$(echo "P 6" | serial_rw.py)
+status=${status:0:7}
+# echo status1s2c=@${status}@
+[ "$status" == "1,0,0,1" ] || { exit 1; }
+
+gpio clear $PIN_RLY1
+gpio set $PIN_RLY2
+status=$(echo "P 6" | serial_rw.py)
+status=${status:0:7}
+# echo status1c2s=@${status}@
+[ "$status" == "0,1,1,0" ] || { exit 2; }
+
+exit 0
+

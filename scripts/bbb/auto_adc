@@ -1,0 +1,36 @@
+#!/bin/bash
+# tary, 14:16 2018/7/25
+
+SYS_DIR=/sys/bus/iio/devices/iio\:device0
+
+cd $SYS_DIR
+
+function adc_read() {
+	r0=$(cat in_voltage0_raw)
+	r1=$(cat in_voltage1_raw)
+	r2=$(cat in_voltage2_raw)
+	r3=$(cat in_voltage3_raw)
+	Vin0=$(( r0 * 1800 / 4096 * 6 / 5 ))
+	Vin1=$(( r1 * 1800 / 4096 * 6 / 5 ))
+	Vin2=$(( r2 * 1800 / 4096 * 6 ))
+	Vin3=$(( r3 * 1800 / 4096 * 6 ))
+# echo "RAW0/mV0 RAW1/mV1 RAW2/mV2 RAW3/mV3"
+# echo $r0/$Vin0 $r1/$Vin1 $r2/$Vin2 $r3/$Vin3
+}
+
+echo "P 3 4 0" | serial_rw.py
+adc_read
+# vin0 < 0.45V, vin1 < 0.3V
+[ $Vin0 -lt 450  -a  $Vin1 -lt 300 ] || { exit 1; }
+# vin2 < 0.83V, vin3 < 1.25V
+[ $Vin2 -lt 830  -a  $Vin3 -lt 1250 ] || { exit 2; }
+
+echo "P 3 4 1" | serial_rw.py
+adc_read
+# vin0 >= 1.8V, vin1 >= 1.2V
+[ $Vin0 -gt 1710  -a  $Vin1 -gt 1140 ] || { exit 3; }
+# vin2 >= 3.3V, vin3 >= 5V
+[ $Vin2 -gt 3040  -a  $Vin3 -gt 4750 ] || { exit 4; }
+
+exit 0
+

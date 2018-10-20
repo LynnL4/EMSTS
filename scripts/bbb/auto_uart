@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# '\r' couldn't be processed by 'command replacement'
+status=$(echo AT | serial_rw.py /dev/ttyO0 | tr '\r' '\n')
+# status=${status:0:2}
+# echo status=@$status@
+[ "$status" = "OK" ]
+

@@ -1,0 +1,39 @@
+#!/bin/bash
+# tary, 2018-10-19 10:54
+
+TRIES=3
+eepid=
+
+leds -t 200 &
+pid_leds=$!
+
+for (( i = 0; i < $TRIES; i++ )); do
+	eepid=$(barcode.py)
+	[[ $eepid =~ ^[0-9]{9}_[0-9]{10} ]] && break;
+done
+if [ $i -ge $TRIES ]; then
+	exit 1
+fi
+kill -9 "$pid_leds"
+
+# BBGW
+version=GW1A
+# serial=4318GW000010
+serial=${eepid:10}
+serial=${serial:2:2}${serial:0:2}${serial:4}
+# echo SERAIL=$serial
+
+# diable eeprom protect
+gpio clear 75
+
+eeprom_rw.py $version $serial; r=$?
+
+# enable eeprom protect 
+gpio set 75
+
+leds all off
+
+echo -ne "$eepid" > bar_code.tmp
+
+exit $r
+
