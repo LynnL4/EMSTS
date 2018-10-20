@@ -44,7 +44,7 @@ class mainjob:
         global globaljob
         self.json_data = json.load(open("config.json",'r'), object_pairs_hook=OrderedDict)
         self.interfaces = []
-        print(self.json_data)
+        # print(self.json_data)
         self.console = importlib.import_module(
                             "modules.console." + self.json_data["console"]["file"]
                         ).console(self.json_data["console"], self.json_data["project"])

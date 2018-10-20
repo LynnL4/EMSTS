@@ -23,6 +23,7 @@
 from kernel import core
 import time
 import os
+
 class subcore(core.interface):
     def __init__(self,parameters,platform,debug):
         super(subcore,self).__init__(parameters)
@@ -33,8 +34,23 @@ class subcore(core.interface):
             "description": self.parameters["description"],
             "result": "failed"
         }
+        self.target = self.parameters.get("SSID", None)
+        self.tries  = self.parameters.get("TRIES", 5)
+
     def do_test(self):
-        wifis =  os.popen('sudo iw '+ self.parameters["device"]+ ' scan | grep "SSID: "').readlines()
-        if len(wifis) != 0 :
-            self.ret["result"] = "ok"
+        tries = 0
+        while tries < self.tries:
+            wifis = os.popen('sudo iw '+ self.parameters["device"]+ ' scan | grep "SSID: "').readlines()
+            # print(wifis)
+            time.sleep(0.5)
+            if self.target is None:
+                if len(wifis) != 0:
+                    self.ret["result"] = "ok"
+            else:
+                for i in range(len(wifis)):
+                    # print("SSID: {}".format(wifis[i]), end='')
+                    if wifis[i].find(self.target) >= 0:
+                        self.ret["result"] = "ok"
+                        tries = self.tries
+                        break
         return self.ret

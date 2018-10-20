@@ -38,13 +38,14 @@ class subcore(core.interface):
         }
         self.bus = self.parameters["busID"]
         self.addrs = self.parameters["addr_list"]
+        self.i2cdetect_opts = self.parameters.get("i2cdetect_opts", "")
 
         self.ADDR_UNEXIST = 0
         self.ADDR_FREE    = 1
         self.ADDR_INUSE   = 2
 
     def detect(self, addr):
-        for line in os.popen("i2cdetect -y " + str(self.bus) + (" " + str(addr)) * 2):
+        for line in os.popen("i2cdetect -y " + self.i2cdetect_opts + " " + str(self.bus) + (" " + str(addr)) * 2):
             pos = line.find(':')
             if pos == -1: continue
             line = line[pos + 1:-1].strip()
@@ -64,7 +65,7 @@ class subcore(core.interface):
     def do_test(self):
         for i in range(len(self.addrs)):
             r = self.detect(self.addrs[i])
-            print("ADDR[0x%2X] = %s" % (self.addrs[i], str(r)))
+            # print("ADDR[0x%2X] = %s" % (self.addrs[i], str(r)))
             if r == 0:
                 self.ret["result"] = "0x%02X" % self.addrs[i]
                 break

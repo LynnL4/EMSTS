@@ -44,13 +44,14 @@ if __name__ == "__main__":
     exit_status = 0
     ts = []
     for j in jobs:
-        if j.is_thread ==  "okay":
+        if j.is_thread == "okay":
             t = threading.Thread(target=do_thread,args=(j.do_test,console,e,))
             t.start()
             ts.append(t)
 
     for i in jobs:
-        if i.is_thread !=  "okay":
+        if i.is_thread != "okay":
+            print("==========          time: {}".format(int(time.time())))
             ret = i.do_test()
             while not console_lock.acquire():
                 time.sleep(0.1)
@@ -63,7 +64,7 @@ if __name__ == "__main__":
                 exit_status = 1
                 break
 
-
+    print("==========          time: {}".format(int(time.time())))
     if console.finish():
         quit(exit_status)
     while True:

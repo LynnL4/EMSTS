@@ -39,3 +39,5 @@ class console:
             print("test succeed")
         else:
             print("test failed")
+        return True
+

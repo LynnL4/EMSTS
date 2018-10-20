@@ -29,12 +29,14 @@ class subcore(core.interface):
         self.parameters = parameters
         self.platform = platform
         self.debug = debug
-        os.popen("ifconfig "+self.parameters["device"]+" up")
-        os.popen("dhclient "+self.parameters["device"])
+        nullout = " > /dev/null 2>&1"
+        os.popen("ifconfig " + self.parameters["device"] + " up" + nullout)
+        os.popen("dhclient " + self.parameters["device"] +         nullout)
         self.ret = {
             "description": self.parameters["description"],
             "result": "ok"
         }
+
     def do_test(self):
         for line in os.popen("ping -l 16 -c 3 -I "+self.parameters["device"]+" "+self.parameters["ping_address"]):
             a = line.find('%')
