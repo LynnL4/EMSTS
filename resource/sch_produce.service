@@ -1,0 +1,13 @@
+[Unit]
+Description=Schneider Produce Test Service
+After=local-fs.target generic-board-startup.service bb-wl18xx-wlan0.service
+
+[Service]
+User=root
+Type=oneshot
+WorkingDirectory=/opt/EMSTS
+ExecStart=/bin/bash scripts/sch_produce
+
+[Install]
+WantedBy=multi-user.target
+

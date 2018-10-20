@@ -1,0 +1,155 @@
+{
+    "project": "PiMicsArrayKit",
+    "console": {
+        "file": "print_console",
+        "description": "log output",
+        "device": "SCREEN"
+    },
+    "rtc": {
+        "module": "wrapper",
+	"file": "bash",
+	"description": "ExtRTC",
+	"cmd" : "rtc_chk 1>&2 ",
+	"status": "okay",
+	"thread": "disabled"
+    },
+    "uart": {
+        "module": "wrapper",
+	"file": "bash",
+        "description": "DebugUART",
+	"cmd" : "auto_uart",
+        "status": "okay",
+	"thread": "disabled"
+    },
+    "i2c1": {
+	"module": "i2c",
+        "file": "i2c_addrs",
+        "description": "I2C1",
+	"i2cdetect_opts": "-r",
+        "busID": 1,
+        "addr_list": [72],
+        "addr_desc": "0x48",
+        "status": "okay",
+        "thread": "disabled"
+    },
+    "terminal": {
+        "module": "wrapper",
+	"file": "bash",
+        "description": "TerminalResistor",
+        "cmd": "leds 6 on; auto_termres",
+        "status": "okay",
+	"thread": "disabled"
+    },
+    "relay": {
+        "module": "wrapper",
+	"file": "bash",
+        "description": "RELAY",
+        "cmd": "auto_relay",
+        "status": "okay",
+	"thread": "disabled"
+    },
+    "rs485": {
+        "module": "wrapper",
+	"file": "bash",
+	"description": "RS485s",
+	"cmd" : "leds 5 on; echo 'P 3 10 1' | serial_rw.py; gpio set 67; gpio set 69; tty_pairs ttyO1,ttyO4 > /dev/null 2>&1",
+	"status": "okay",
+	"thread": "disabled"
+    },
+    "can": {
+        "module": "wrapper",
+	"file": "bash",
+	"description": "CANs",
+	"cmd" : "leds 4 on; echo 'P 3 9 1' | serial_rw.py; echo 'P 3 7 0' | serial_rw.py; config-pin P9_19 can;config-pin P9_20 can;gpio set 81;can_pairs can0,can1 can1,can2 >/dev/null 2>&1",
+	"status": "okay",
+	"thread": "disabled"
+    },
+    "can01": {
+        "module": "wrapper",
+	"file": "bash",
+	"description": "CANJ11AtoC",
+	"cmd" : "leds 3 on; echo 'P 3 9 0' | serial_rw.py; echo 'P 3 7 1' | serial_rw.py; config-pin P9_19 can;config-pin P9_20 can;gpio set 81;can_pairs can0,can1 >/dev/null 2>&1",
+	"status": "okay",
+	"thread": "disabled"
+    },
+    "adc": {
+        "module": "wrapper",
+	"file": "bash",
+        "description": "CurrentAnalog",
+        "cmd": "leds 2 on; auto_adc",
+        "status": "okay",
+	"thread": "disabled"
+    },
+    "digitinput": {
+        "module": "wrapper",
+	"file": "bash",
+        "description": "DigitalInput",
+        "cmd": "leds 1 on; auto_digi_input",
+        "status": "okay",
+	"thread": "disabled"
+    },
+    "wifi": {
+        "description": "wifi",
+        "file": "general_wifi",
+        "device": "wlan0",
+	"SSID"  : "SEEED_TEST_2G",
+        "status": "okay"
+    },  
+    "jumper": {
+        "module": "wrapper",
+	"file": "bash",
+	"description": "JUMPERs",
+	"cmd" : "ledsflash() { leds -t 6 1 & }; ledsflash; gpio_button -t 6 JMP1-J10=72 JMP2-J9=86 JMP3-J8=88 1>&2 ",
+	"status": "okay",
+	"thread": "disabled"
+    },
+    "button": {
+        "module": "wrapper",
+	"file": "bash",
+	"description": "BUTTONs",
+	"cmd" : "gpio_button -t 6 RESET=19 SW2=104 SW3=103 SW4=18 1>&2 ",
+	"status": "okay",
+	"thread": "disabled"
+    },
+    "emmc": {
+        "module": "wrapper",
+	"file": "bash",
+        "description": "eMMC",
+        "cmd": "blkdev -o 1048576 -b 512 /dev/mmcblk1 /bin/bash > /dev/null 2>&1",
+        "status": "okay",
+	"thread": "disabled"
+    },
+    "ethernet": {
+        "module": "wrapper",
+	"file": "bash",
+        "description": "ETHERNET",
+        "cmd": "leds 1 on; auto_ethernet",
+        "status": "okay",
+	"thread": "disabled"
+    },
+    "fram": {
+        "module": "wrapper",
+        "file": "bash",
+        "description": "FM25v01",
+        "cmd": "redir_mtd",
+        "status": "okay",
+	"thread": "disabled"
+    },
+    "eeprom": {
+        "module": "wrapper",
+        "file": "bash",
+        "description": "EEPROM",
+	"cmd" : "eeprom-wp > /dev/null 2>&1",
+        "status": "okay",
+	"thread": "disabled"
+    },
+    "buzzer": {
+        "module": "wrapper",
+	"file": "bash",
+	"description": "BUZZER",
+	"cmd" : "leds 0 on; buz() { gpio set 9;pwm 1 A u 1000; gpio_button -t 6 SW4=18 1>&2; r=$?; pwm 1 A 0 1000; return $r; }; buz",
+	"status": "okay",
+	"thread": "disabled"
+    }
+}
+

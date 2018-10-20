@@ -6,9 +6,10 @@ THRD_VOLT=255
 # Remove conection between double RS485s
 echo "P 3 10 0" | serial_rw.py > /dev/null
 
-echo "Debug only" >&2
-exit 0
-
+if [ "$PRODUCE_TEST_DBG" ]; then
+	echo "Debug only" >&2
+	exit 0
+fi
 
 function voltage_get() {
 	local s12 s13 s14
