@@ -56,3 +56,32 @@ erase_rtcw_flag > /dev/null 2>&1
 
 exit $r
 
+
+
+# The script file /uEnv.txt
+# to set RTC time before this time power-on startup.
+
+: <<\EOF
+﻿##Rename as: uEnv.txt to override old bootloader in eMMC
+
+eep_cont=0x8C000000
+rtc_cont=0x8C001000
+
+i2c_init=i2c dev 0;i2c probe;
+
+mem_wr_const=mw.b ${eep_cont} 0xFF;
+eep_rd_sign=i2c read 0x50 0x100.2 0x1 ${rtc_cont}; md.b ${rtc_cont} 1;
+eep_wr_sign=mw.l 0x44E108B4 0x27; gpio clear 75; i2c mw 0x50 0x100.2 0xAA;
+
+# 2018-10-01 00:00:00 Mon
+rtc_wr_time=i2c mw 0x68 0x0.1 0x00;i2c mw 0x68 0x1.1 0x00;i2c mw 0x68 0x2.1 0x80;
+rtc_wr_date=i2c mw 0x68 0x3.1 0x02;i2c mw 0x68 0x4.1 0x01;i2c mw 0x68 0x5.1 0x10;i2c mw 0x68 0x6.1 0x18;
+rtc_wr_ctrl=i2c mw 0x68 0x7.1 0xC0;
+rtc_wr_dt=run rtc_wr_time;run rtc_wr_date; run rtc_wr_ctrl;
+
+echo_clean=echo \"############################### RTC Clean, Write Now ###############################\";
+echo_timed=echo \"******************************* RTC has time *******************************\";
+
+uenvcmd=run i2c_init; run mem_wr_const; run eep_rd_sign; if cmp.b ${eep_cont} ${rtc_cont} 1; then run echo_clean; run eep_wr_sign; run rtc_wr_dt; else run echo_timed; fi
+EOF
+

@@ -84,18 +84,17 @@ if [ "$index" == "" -a "$value" == "" ]; then
 fi
 
 
-[ "$value" ] || value=1
 [ "$value" == "on" -o "$value" == "ON" ] && value=1
 [ "$value" == "off" -o "$value" == "OFF" ] && value=0
 
 if [ "$index" == "all" -o "$index" == "ALL" ]; then
-
 	for x in $leds; do
 		echo $value > $x/brightness
 	done
 fi
 
 if [ "$index" != "" -a "$value" == "" ]; then
+	[ "$value" ] && value=1
 	for ((i = 0; i < ${flash_cnt}; i++)); do
 		echo 1 > ${leds_array[$index]}/brightness
 		sleep $_halfsleep
