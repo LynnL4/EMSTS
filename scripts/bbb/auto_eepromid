@@ -4,7 +4,8 @@
 TRIES=3
 eepid=
 
-leds -t 200 &
+leds all off
+leds -t 1000 6 &
 pid_leds=$!
 
 for (( i = 0; i < $TRIES; i++ )); do

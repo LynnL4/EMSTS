@@ -12,14 +12,14 @@ gpio set $PIN_RLY1
 gpio clear $PIN_RLY2
 status=$(echo "P 6" | serial_rw.py)
 status=${status:0:7}
-# echo status1s2c=@${status}@
+echo status1s2c=@${status}@ want 1,0,0,1
 [ "$status" == "1,0,0,1" ] || { exit 1; }
 
 gpio clear $PIN_RLY1
 gpio set $PIN_RLY2
 status=$(echo "P 6" | serial_rw.py)
 status=${status:0:7}
-# echo status1c2s=@${status}@
+echo status1c2s=@${status}@ want 0,1,1,0
 [ "$status" == "0,1,1,0" ] || { exit 2; }
 
 exit 0

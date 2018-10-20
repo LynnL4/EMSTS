@@ -41,7 +41,7 @@ class subcore(core.interface):
         tries = 0
         while tries < self.tries:
             wifis = os.popen('sudo iw '+ self.parameters["device"]+ ' scan | grep "SSID: "').readlines()
-            # print(wifis)
+            print(wifis)
             time.sleep(0.5)
             if self.target is None:
                 if len(wifis) != 0:

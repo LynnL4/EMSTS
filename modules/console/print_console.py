@@ -20,6 +20,9 @@
 # LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+from __future__ import print_function
+import sys
+
 class console:
     def __init__(self,parameters,platform):
         self.t = True
@@ -30,7 +33,11 @@ class console:
             if a["result"] != "ok" and a["result"] != "listen" and  a["result"] != "watch": 
                 if self.t == True:
                     self.t = False
-            print(a)
+            print("*****************************************", end='')
+            print(a, end='')
+            print("*****************************************")
+            sys.stdout.flush()
+
     def debug(self,*args):
         for a in args:
             print(a)     

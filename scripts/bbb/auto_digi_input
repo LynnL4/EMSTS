@@ -9,14 +9,14 @@ status=$(echo "P 3 5 1" | serial_rw.py)
 status=$(echo "P 3 6 0" | serial_rw.py)
 # echo -> translate '\x0a' to ' '
 status=`echo $(gpio input $PIN_DIN1; gpio input $PIN_DIN2)`
-echo status1=@${status}@
+echo status1=@${status}@ want 1 0
 [ "$status" = "1 0" ] || { exit 1; }
 
 status=$(echo "P 3 5 0" | serial_rw.py)
 status=$(echo "P 3 6 1" | serial_rw.py)
 # echo -> translate '\x0a' to ' '
 status=`echo $(gpio input $PIN_DIN1; gpio input $PIN_DIN2)`
-echo status2=@${status}@
+echo status2=@${status}@ want 0 1
 [ "$status" = "0 1" ] || { exit 2; }
 
 exit 0

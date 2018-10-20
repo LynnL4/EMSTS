@@ -39,7 +39,10 @@ function result_report() {
 
 	
 	echo RESULT_NAME=$result_name
-	mv $logtest "$result_path$result_name"
+	cp  $logtest    "$result_path$result_name"
+	cat $logthis >> "$result_path$result_name"
+	sync
+	sync
 	# upload test log/results
 	$(dirname $0)/alicloud_upload.py "$result_name" "$result_path$result_name"
 
@@ -58,6 +61,7 @@ function result_report() {
 		# all fixture leds always on
 		echo "P 2 4" | serial_rw.py
 	fi
+	poweroff
 	while true; do sleep 5; done
 }
 
@@ -78,11 +82,14 @@ result_name=${result_name}_T${now}
 # retrive all fixture MCU log
 echo "P 8" | serial_rw.py >> $logtest
 
-tee -a $logtest < <( ./start; r=$?; echo $r > test_result.tmp )
+# Main test procedures
+# tee -a $logtest < <( ./start; r=$?; echo $r > test_result.tmp )
+# r=`cat test_result.tmp`
+# rm -f test_result.tmp
+
+./start 1>&2; r=$?
 sync
 
-r=`cat test_result.tmp`
-rm -f test_result.tmp
 [ "$r" -eq 0 ] && r=
 result_report $r
 

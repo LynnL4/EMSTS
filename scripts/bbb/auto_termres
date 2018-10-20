@@ -37,10 +37,12 @@ function voltage_get() {
 
 gpio set 67; gpio set 69; gpio set 81
 voltage_get
-# [ "$Q14" -gt $THRD_VOLT  -a  "$Q13" -gt $THRD_VOLT  -a  "$Q12" -gt $THRD_VOLT ] || { exit 1; }
+echo "WANT Q14,Q13,Q12 < $THRD_VOLT"
+[ "$Q14" -lt $THRD_VOLT  -a  "$Q13" -lt $THRD_VOLT  -a  "$Q12" -lt $THRD_VOLT ] || { exit 1; }
 
 gpio clear 67; gpio clear 69; gpio clear 81
 voltage_get
+echo "WANT Q14,Q13,Q12 > $THRD_VOLT"
 [ "$Q14" -gt $THRD_VOLT  -a  "$Q13" -gt $THRD_VOLT  -a  "$Q12" -gt $THRD_VOLT ] || { exit 2; }
 
 exit 0
