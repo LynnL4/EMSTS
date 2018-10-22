@@ -35,5 +35,7 @@ if __name__ == '__main__':
 
     uploader = log_uploader()
     # uploader.uploadfile("113990554_1843000010_T201810191901_FAIL.log", "/var/schneider/113990554_1843000010_T201810191901_FAIL.log")
-    uploader.uploadfile(sys.argv[1], sys.argv[2])
-    quit(0)
+    if uploader.uploadfile(sys.argv[1], sys.argv[2]):
+        quit(0)
+    quit(2)
+

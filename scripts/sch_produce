@@ -23,12 +23,22 @@ export PATH=/opt/EMSTS/scripts/bbb:$PATH;
 
 set -x
 logthis=/var/log/$(basename $0).log
-logtest=`mktemp`
 exec 3>&1
 exec 1>$logthis 2>&1
+logtest=`mktemp`
 
 function result_report() {
 	local error=$1
+
+	result_path=/var/schneider/
+	result_name=`cat bar_code.tmp`
+	rm -f bar_code.tmp
+
+	# Add time to result file name
+	now=`TZ='Asia/Shanghai' date +"%Y%m%d%H%M"`
+	result_name=${result_name}_T${now}
+	sync
+	sync
 
 	if [ "$error" ]; then
 		# error status
@@ -43,8 +53,13 @@ function result_report() {
 	cat $logthis >> "$result_path$result_name"
 	sync
 	sync
+
 	# upload test log/results
-	$(dirname $0)/alicloud_upload.py "$result_name" "$result_path$result_name"
+	for (( i = 0; i < 100; i++ )); do
+		$(dirname $0)/alicloud_upload.py "$result_name" "$result_path$result_name"
+		r=$?
+		[ "$r" -eq 0 ] && break
+	done
 
 	sync
 	sync
@@ -61,34 +76,42 @@ function result_report() {
 		# all fixture leds always on
 		echo "P 2 4" | serial_rw.py
 	fi
-	poweroff
+
+	if [ ! "$PRODUCE_TEST_DBG" ]; then
+		poweroff
+	fi
 	while true; do sleep 5; done
 }
 
 # clear this log
 : > $logtest
 
-# Boot complete, LED cycle
-# Scan bar code
-auto_eepromid >> $logtest
-result_name=`cat bar_code.tmp`
-rm -f bar_code.tmp
+function main_proc() {
+	# Boot complete, LED cycle
+	# Scan bar code
+	auto_eepromid >> $logtest
+	r=$?
+	[ "$r" -eq 0 ] || { return $r; }
 
-result_path=/var/schneider/
-# Add time to result file name
-now=`TZ='Asia/Shanghai' date +"%Y%m%d%H%M"`
-result_name=${result_name}_T${now}
+	# retrive all fixture MCU log
+	echo "P 8" | serial_rw.py >> $logtest
+	r=$?
+	[ "$r" -eq 0 ] || { return $r; }
 
-# retrive all fixture MCU log
-echo "P 8" | serial_rw.py >> $logtest
+	# Main test procedures
+	# tee -a $logtest < <( ./start; r=$?; echo $r > test_result.tmp )
+	# r=`cat test_result.tmp`
+	# rm -f test_result.tmp
 
-# Main test procedures
-# tee -a $logtest < <( ./start; r=$?; echo $r > test_result.tmp )
-# r=`cat test_result.tmp`
-# rm -f test_result.tmp
+	./start 1>&2
+	r=$?
+	sync
+	[ "$r" -eq 0 ] || { return $r; }
+	return 0
+}
 
-./start 1>&2; r=$?
-sync
+
+main_proc; r=$?
 
 [ "$r" -eq 0 ] && r=
 result_report $r

@@ -23,7 +23,7 @@ def serial_read(cmd = None):
             break
         time.sleep(1)
     if not timecnt:
-        return rcv
+        return None
 
     try:
         port = serial.Serial(tty_dev, baudrate = 115200, timeout = 2)
@@ -55,5 +55,9 @@ if __name__ == '__main__':
     if inp == '':
         quit(1)
     print("serial_rw cmd: {}".format(inp), file=sys.stderr)
-    print(serial_read(inp))
+    r = serial_read(inp);
+    if r is None:
+        quit(2)
+    print(r)
     quit(0)
+
