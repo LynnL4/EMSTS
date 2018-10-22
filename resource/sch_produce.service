@@ -1,6 +1,6 @@
 [Unit]
 Description=Schneider Produce Test Service
-After=local-fs.target generic-board-startup.service bb-wl18xx-wlan0.service
+After=bb-wl18xx-wlan0.service systemd-rfkill.service
 
 [Service]
 User=root
@@ -10,4 +10,3 @@ ExecStart=/bin/bash scripts/sch_produce
 
 [Install]
 WantedBy=multi-user.target
-

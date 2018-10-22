@@ -40,6 +40,7 @@ class subcore(core.interface):
     def do_test(self):
         tries = 0
         while tries < self.tries:
+            tries += 1
             wifis = os.popen('sudo iw '+ self.parameters["device"]+ ' scan | grep "SSID: "').readlines()
             print(wifis)
             time.sleep(0.5)

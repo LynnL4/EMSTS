@@ -86,11 +86,12 @@
         "thread": "disabled"
     },
     "wifi": {
-        "description": "wifi",
-        "file": "general_wifi",
-        "device": "wlan0",
-        "SSID"  : "SEEED_TEST_2G",
-        "status": "okay"
+        "module": "wrapper",
+        "file": "bash",
+        "description": "WiFis",
+        "cmd": "auto_wifi SEEED_TEST_2G 1>&2",
+        "status": "okay",
+        "thread": "disabled"
     },  
     "jumper": {
         "module": "wrapper",

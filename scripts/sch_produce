@@ -27,6 +27,8 @@ exec 3>&1
 exec 1>$logthis 2>&1
 logtest=`mktemp`
 
+# exit 0
+
 function result_report() {
 	local error=$1
 
@@ -87,6 +89,21 @@ function result_report() {
 : > $logtest
 
 function main_proc() {
+
+	# prepare wlan interface
+	ifconfig wlan0 down
+
+	TIMEOUT=200
+	for (( i = 0; i < $TIMEOUT; i++)); do
+		if [ -e /dev/input/by-id/usb-NEWTOLOGIC_NEWTOLOGIC-event-kbd ]; then
+			break
+		fi
+		sleep 1
+	done
+	if (( i >= $TIMEOUT )); then
+		return $TIMEOUT
+	fi
+
 	# Boot complete, LED cycle
 	# Scan bar code
 	auto_eepromid >> $logtest

@@ -1,0 +1,106 @@
+#!/bin/bash
+
+# set -x
+
+# TARGET=SEEED-MKT
+# TARGET=fan
+TARGET=${1:-novastar}
+DEV=wlan0
+TRIES=3
+WL18XX_CONF_BIN=/lib/firmware/ti-connectivity/wl18xx-conf.bin
+
+function wifi_get() {
+	local target
+	local fields
+	local found
+
+	# clear cache
+	{
+		iwconfig $DEV txpower off
+		iwconfig $DEV power off
+		iw dev $DEV scan sched_stop
+		iw dev $DEV scan abort
+		sleep 0.5
+		iwconfig $DEV txpower on
+		iwconfig $DEV power on
+	} # > /dev/null 2>&1
+
+	target=${1}
+	found=
+	while read line; do
+		fields=( $line )
+		echo $line 1>&2
+		if [ "${fields[1]}" == "$target" ]; then
+			found=true
+			break
+		fi
+	done < <(iw dev $DEV scan | grep "SSID:")
+	if [ ! "$found" ]; then
+		echo ""
+		return 1
+	fi
+	echo ${fields[1]}
+	return 0
+}
+
+
+# refer to http://processors.wiki.ti.com/index.php/WL18xx_TX_Testing
+
+function wifi_phy_args() {
+	local phyarg
+	phyarg=${1}
+
+	ifconfig $DEV down
+
+	# remove the wlcore_sdio module before updating the bin file
+	rmmod wlcore_sdio
+
+	wlconf -i $WL18XX_CONF_BIN -o $WL18XX_CONF_BIN --set wl18xx.phy.spare0=$phyarg
+	wlconf -i $WL18XX_CONF_BIN -o $WL18XX_CONF_BIN --set wl18xx.phy.number_of_assembled_ant2_4=0x01
+	sync
+
+	# reinsert the wlcore_sdio
+	modprobe wlcore_sdio
+	for (( i = 0; i < 5; i++ )); do
+		ifconfig $DEV up > /dev/null 2>&1 && {
+			echo "Ifconfig $DEV up OK"
+			break
+		}
+		sleep 0.2
+	done
+
+	# set tx power
+	phys=( $( iw phy | head -n 1 ) )
+	for (( i = 0; i < 20; i++ )); do
+		if iw phy ${phys[1]} set txpower fixed 100; then
+			echo "Set tx power OK"
+			break
+		fi
+		sleep 0.1
+	done
+
+	for (( i = 0; i < $TRIES; i++ )); do
+		echo "###### Try $i time ... ######"
+		status=$(wifi_get $TARGET)
+		[ "$status" == "$TARGET" ] && {
+			return 0;
+		}
+		sleep 0.3
+	done
+	return 1
+}
+
+cd /usr/share/ti/wlconf/
+
+# * Configuration changed to BG1 primary #
+echo "____________________ANTENNA 1 Scan"
+wifi_phy_args 0x80 || exit 1
+echo "____________________ANTENNA 1 *** OK ***"
+
+
+# * Configuration changed back to BG2 primary #
+echo "____________________ANTENNA 2 Scan"
+wifi_phy_args 0x00 || exit 2
+echo "____________________ANTENNA 2 *** OK ***"
+exit 0
+
