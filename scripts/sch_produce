@@ -35,7 +35,7 @@ function result_report() {
 	rm -f bar_code.tmp
 
 	# Add time to result file name
-	now=`TZ='Asia/Shanghai' date +"%Y%m%d%H%M"`
+	now=`TZ='Asia/Shanghai' date +"%Y%m%d-%H%M%S"`
 	result_name=${result_name}_T${now}
 	sync
 	sync
@@ -44,7 +44,7 @@ function result_report() {
 		# error status
 		result_name=${result_name}_FAIL.log
 	else
-		result_name=${result_name}_PASS.log
+		result_name=${result_name}_OK.log
 	fi
 
 	

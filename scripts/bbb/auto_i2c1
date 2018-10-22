@@ -1,0 +1,15 @@
+#!/bin/bash
+
+function i2c1() {
+	gpio set 60
+	i2cdetect -y -r 1 | egrep " 48 " && {
+		return 1;
+	}
+	gpio clear 60
+	i2cdetect -y -r 1 | egrep " 48 " || {
+		return 2;
+	}
+	echo "========== OK =========="
+}
+
+i2c1

@@ -22,13 +22,10 @@
         "thread": "disabled"
     },
     "i2c1": {
-        "module": "i2c",
-        "file": "i2c_addrs",
+        "module": "wrapper",
+        "file": "bash",
         "description": "I2C1",
-        "i2cdetect_opts": "-r",
-        "busID": 1,
-        "addr_list": [72],
-        "addr_desc": "0x48",
+        "cmd": "auto_i2c1 1>&2",
         "status": "okay",
         "thread": "disabled"
     },
