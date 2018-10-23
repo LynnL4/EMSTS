@@ -14,6 +14,7 @@ function wifi_get() {
 	local fields
 	local found
 
+: <<\EOF
 	# clear cache
 	{
 		iwconfig $DEV txpower off
@@ -24,6 +25,7 @@ function wifi_get() {
 		iwconfig $DEV txpower on
 		iwconfig $DEV power on
 	} # > /dev/null 2>&1
+EOF
 
 	target=${1}
 	found=
@@ -40,7 +42,19 @@ function wifi_get() {
 		return 1
 	fi
 	echo ${fields[1]}
-	return 0
+
+	{
+	iw dev $DEV connect $TARGET
+	dhclient -i $DEV
+	ifconfig $DEV
+	addrs=( $(ifconfig $DEV | egrep " inet ") )
+	ipaddr=${addrs[1]}
+	if [[ $ipaddr =~ ^[0-9]+.[0-9]+.[0-9]+.[0-9]+$ ]]; then
+		echo "IP ${addrs[1]} OK"
+		return 0
+	fi
+	} 1>&2
+	return 1
 }
 
 
@@ -69,6 +83,7 @@ function wifi_phy_args() {
 		sleep 0.2
 	done
 
+: <<\EOF
 	# set tx power
 	phys=( $( iw phy | head -n 1 ) )
 	for (( i = 0; i < 20; i++ )); do
@@ -79,9 +94,13 @@ function wifi_phy_args() {
 		sleep 0.1
 	done
 
+EOF
 	for (( i = 0; i < $TRIES; i++ )); do
 		echo "###### Try $i time ... ######"
 		status=$(wifi_get $TARGET)
+		# clean zombie
+		killall dhclient
+
 		[ "$status" == "$TARGET" ] && {
 			return 0;
 		}
@@ -90,17 +109,32 @@ function wifi_phy_args() {
 	return 1
 }
 
+function wifi_clean() {
+	ifconfig eth0 && {
+		ifconfig wlan0 down
+	}
+}
+
 cd /usr/share/ti/wlconf/
 
 # * Configuration changed to BG1 primary #
 echo "____________________ANTENNA 1 Scan"
-wifi_phy_args 0x80 || exit 1
+wifi_phy_args 0x80 || {
+	wifi_clean
+	exit 1
+}
 echo "____________________ANTENNA 1 *** OK ***"
 
 
 # * Configuration changed back to BG2 primary #
 echo "____________________ANTENNA 2 Scan"
-wifi_phy_args 0x00 || exit 2
+wifi_phy_args 0x00 || {
+	wifi_clean
+	exit 2
+}
 echo "____________________ANTENNA 2 *** OK ***"
+
+wifi_clean
 exit 0
+
 
