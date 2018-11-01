@@ -4,6 +4,6 @@
 
 ifconfig eth0 up  > /dev/null
 dhclient eth0 > /dev/null 2>&1
-# ping -c 3 -I eth0 $(get_gateway) > /dev/null
-ping -l 8 -c 8 -I eth0 $(get_gateway) 2>&1
+ping       -c 3 -I eth0 $(get_gateway) 2>&1
+#ping -l 8 -c 8 -I eth0 $(get_gateway) 2>&1
 exit $?

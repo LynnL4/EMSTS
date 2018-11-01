@@ -77,13 +77,22 @@ function i2c() {
 }
 
 function rtcr() {
-	# hwclock -r -f /dev/rtc1;
-	date +"%F %T.%N";
+	hwclock -r -f /dev/rtc1;
+	# date +"%F %T.%N";
 	hwclock -c -f /dev/rtc1;
 }
 
 function rtcw() {
 	hwclock -w -f /dev/rtc1;
+}
+
+function erase_rtcw_flag() {
+	gpio clear 75
+	eeprom=/sys/devices/platform/ocp/44e0b000.i2c/i2c-0/0-0050/eeprom
+	file_erased=`mktemp`
+	echo -ne "\xFF\xFF\xFF\xFF" > $file_erased
+	dd if=$file_erased of=$eeprom bs=1 seek=256
+	hexdump -C -v -n 16 -s 0x100 $eeprom
 }
 
 function dinput() {
