@@ -115,6 +115,8 @@ function wifi_clean() {
 	}
 }
 
+# systemctl stop wpa_supplicant.service
+
 cd /usr/share/ti/wlconf/
 
 # * Configuration changed to BG1 primary #

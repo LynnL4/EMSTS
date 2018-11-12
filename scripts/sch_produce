@@ -88,6 +88,9 @@ function result_report() {
 # clear this log
 : > $logtest
 
+systemctl mask wpa_supplicant.service
+systemctl stop wpa_supplicant.service
+
 function main_proc() {
 
 	# prepare wlan interface
