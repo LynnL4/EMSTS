@@ -10,8 +10,9 @@ pid_leds=$!
 
 for (( i = 0; i < $TRIES; i++ )); do
 	# eepid=113990554_18430000012
+	# eepid=113990554_C1914000550
 	eepid=$(barcode.py)
-	[[ $eepid =~ ^[0-9]{9}_[0-9]{11}$ ]] && break;
+	[[ $eepid =~ ^[0-9]{9}_[0-9cC]{11}$ ]] && break;
 done
 if [ $i -ge $TRIES ]; then
 	exit 1
@@ -21,8 +22,15 @@ kill -9 "$pid_leds"
 # BBGW
 version=GW1A
 # serial=18430000012
+# or
+# serial=C1914000550
 serial=${eepid:10}
-serial=${serial:2:2}${serial:0:2}G${serial:4}
+_ch=${serial:0:1}
+[ "X$_ch" == "Xc" -o "X$_ch" == "XC" ] && {
+	serial=${serial:3:2}${serial:1:2}G0${serial:5}
+} || {
+	serial=${serial:2:2}${serial:0:2}G${serial:4}
+}
 # echo SERAIL=$serial
 
 # diable eeprom protect
