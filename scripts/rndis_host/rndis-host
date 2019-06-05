@@ -1,0 +1,66 @@
+#!/bin/bash
+#tary, 12:49 2019/06/05
+
+# set -x
+
+# [ -f $0.local ] && . $0.local
+
+logf=/var/log/$(basename $0).log
+address=192.168.7.1
+driver=rndis_host
+
+function help_msg() {
+	echo "$0 [-a address] [-d driver]";
+	echo "  address default to $address"
+	echo "  driver  to match ethernet driver, default rndis_host"
+	exit 1
+}
+
+function rndis_get_dev() {
+	local _match _i
+	_match="$1"
+
+	for _i in $(ls -d /sys/class/net/eth*); do
+		if cat $_i/device/uevent | egrep -m 1 "DRIVER=$driver\$" >/dev/null; then
+			echo $(basename $_i)
+			return 0
+		fi
+	done
+	return 1
+}
+
+while getopts "a:d:h" opt; do
+	case $opt in
+	a)	address=$OPTARG;;
+	d)	driver=$OPTARG;;
+	h)	help_msg;;
+	esac
+done
+
+echo "logfile: ${logf}"
+
+exec 1>$logf 2>&1
+echo "address: ${address}"
+echo "driver:  ${driver}"
+
+
+last_dev=""
+while true; do
+	dev=$(rndis_get_dev $driver)
+
+	if [ "$dev" != "$last_dev" ]; then
+		echo -ne "`date`:  "
+		if [ -n "$dev" ]; then
+			echo "DEV=$dev appeared!!!"
+			ifconfig $dev $address
+		else
+			echo "DEV=$last_dev removed..."
+		fi
+	fi
+
+	sleep 1
+	last_dev=$dev
+done
+
+exit 0
+

@@ -1,0 +1,12 @@
+[Unit]
+Description=RNDIS Host Address Service
+After=local-fs.target
+
+[Service]
+User=root
+Type=oneshot
+ExecStart=/usr/bin/rndis-host -a 192.168.7.1
+
+[Install]
+WantedBy=multi-user.target
+
