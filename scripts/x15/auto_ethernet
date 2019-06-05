@@ -1,0 +1,17 @@
+#!/bin/bash
+
+. $(dirname $0)/aux-funcs
+
+ifconfig eth0 up  > /dev/null
+dhclient eth0 > /dev/null 2>&1
+#ping -c 8 -I eth0 -l 8 $(get_gateway) 2>&1
+ping  -c 2 -I eth0 $(get_gateway) 2>&1 && {
+	ifconfig     eth1 192.168.9.101
+	sleep 1
+	ping -c 2 -I eth1 192.168.9.100 && {
+		exit 0
+	}
+} 2>&1
+
+exit $?
+
