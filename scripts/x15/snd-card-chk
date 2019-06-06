@@ -1,0 +1,99 @@
+#!/bin/bash
+# tary, 11:10 2019-06-06
+
+function __usage() {
+	cat <<EOF
+
+Usage:
+  Play a fixed frequency signal wave audio on OUTPUT,
+then check the recording audio signal frequency(not sampling frequency)
+
+Syntax:
+  $0 [ -n <sound-card-name> ] [ -s <signal-frequency> ] [ -h ] [ -c channels ] <wave-file-to-play>
+EOF
+	exit 2
+}
+
+function snd_card_get_id() {
+	local _name _i _id
+	_name="$1"
+
+	for _i in $(ls -d /sys/class/sound/card[0-9]); do
+		name=$(cat "$_i/id")
+		if [ "${name}" = "$_name" ]; then
+			_id=$(basename $_i)
+			echo "${_id#card}"
+			return 0
+		fi
+	done
+	return 1
+}
+
+[ $# -lt 2 ] && {
+	__usage
+}
+
+name=
+wave_file=
+sig_freq=1000
+samp_freq=44100
+samp_file=/tmp/$(basename $0).wav
+channels=2
+while getopts "n:s:c:h" opt; do
+	case "$opt" in
+	n)	name=$OPTARG;;
+	s)	sig_freq=$OPTARG;;
+	c)	channels=$OPTARG;;
+	h)	__usage;;
+	esac
+done
+
+eval wave_file="\$$OPTIND"
+[ -z "$wave_file" -o ! -e "$wave_file" ] && {
+	echo "Error: specify valid wave-file-to-play, $wave_file invalid!"
+	exit 2
+}
+
+card_id=$(snd_card_get_id $name)
+[ -z "$card_id" ] && {
+	echo "Error: specify valid sound-card-name, $name invalid!"
+	exit 2
+}
+
+echo CARD_ID=${card_id}
+
+aplay   -D plughw:${card_id},0 -r $samp_freq $wave_file &
+pid_play=$!
+
+for _ in {0..50}; do
+	if ps -f -p $pid_play | egrep "[a]play" >/dev/null; then
+		break;
+	fi
+	sleep 0.1;
+done
+arecord -D plughw:${card_id},0 -d 3 -f S16_LE -r $samp_freq -c $channels $samp_file; r=$?
+
+kill -9 $pid_play
+# while ps -ef | egrep "[a]play" >/dev/null; do sleep 0.1; done
+for _ in {0..50}; do
+	if ! ps -f -p $pid_play | egrep "[a]play" >/dev/null; then
+		break;
+	fi;
+	sleep 0.1;
+done
+
+[ "$r" -eq "0" ] || {
+	exit $r
+}
+
+_target_freq=$(audio_freq_chk.py $samp_file)
+_target_freq=$(echo $_target_freq | awk -F'=' '{ printf "%s\n", $2; }')
+echo TARGET-SIG-FREQ=$_target_freq
+
+r=0
+(( $sig_freq - 10 < $_target_freq && $_target_freq < $sig_freq + 10 )) || {
+	r=5
+}
+
+exit $r
+
