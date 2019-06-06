@@ -1,0 +1,103 @@
+{
+    "project": "PiMicsArrayKit",
+    "console": {
+        "file": "screen_console",
+        "description": "log output",
+        "device": "SCREEN"
+    },
+    "i2c0": {
+	"module": "i2c",
+        "file": "i2c_addrs",
+        "description": "I2C0",
+        "busID": 0,
+        "addr_list": [72,   80,     88],
+        "addr_desc": "0x48, 0x50, 0x58",
+        "i2cdetect_opts": "-r",
+        "status": "okay",
+        "thread": "disabled"
+    },
+    "i2c2": {
+	"module": "i2c",
+        "file": "i2c_addrs",
+        "description": "I2C2",
+        "busID": 2,
+        "addr_list": [  87],
+        "addr_desc": "0x57",
+        "i2cdetect_opts": "-r",
+        "status": "okay",
+        "thread": "disabled"
+    },
+    "uart8_9": {
+        "module": "wrapper",
+        "file": "bash",
+        "description": "UART8-9",
+        "cmd" : "tty_pairs ttyS0,ttyS1 1>&2 && rcts_pairs.py ttyS0,ttyS1 1>&2",
+        "status": "okay",
+        "thread": "disabled"
+    },
+    "audio": {
+        "module": "wrapper",
+        "file": "bash",
+        "description": "AUDIO-IO",
+        "cmd" : "snd-card-chk -n BeagleBoardX15  -s 440 /opt/backup/sine-fix-440hz.wav",
+        "status": "okay",
+        "thread": "disabled"
+    },
+    "exp-2mic": {
+        "module": "wrapper",
+        "file": "bash",
+        "description": "EX-2MIC",
+        "cmd": "snd-card-chk -n seeed2micvoicec -s 440 /opt/backup/sine-fix-440hz.wav",
+        "status": "okay",
+        "thread": "disabled"
+    },
+    "exp-pcie": {
+        "module": "wrapper",
+        "file": "bash",
+        "description": "EX-PCIE",
+        "cmd" : "test -e /sys/class/net/wlan0",
+        "status": "okay",
+        "thread": "disabled"
+    },
+    "emmc": {
+        "module": "wrapper",
+        "file": "bash",
+        "description": "eMMC",
+        "cmd": "auto_emmc 1>&2",
+        "status": "okay",
+        "thread": "disabled"
+    },
+    "usbhost": {
+        "module": "wrapper",
+        "file": "bash",
+        "description": "USBHOST",
+        "cmd" : "auto_usbhost 1>&2",
+        "status": "okay",
+        "thread": "disabled"
+    },
+    "usbdev": {
+        "module": "wrapper",
+        "file": "bash",
+        "description": "USBDEV",
+        "cmd": "auto_usbdev 1>&2",
+        "status": "okay",
+        "thread": "disabled"
+    },  
+    "ethernet": {
+        "module": "wrapper",
+        "file": "bash",
+        "description": "ETHER",
+        "cmd": "auto_ethernet 1>&2",
+        "status": "okay",
+        "thread": "disabled"
+    },
+    "uart3": {
+        "module": "wrapper",
+        "file": "bash",
+        "description": "DebugUART",
+        "cmd" : "auto_uart 1>&2",
+        "status": "okay",
+        "thread": "disabled"
+    }
+}
+

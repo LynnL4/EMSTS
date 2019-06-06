@@ -41,7 +41,7 @@ class console:
             self.data_json.clear()
             self.data_json["type"] = "text"
             self.data_json["description"] = a["description"]
-            self.data_json["result"] = a["result"]
+            self.data_json["result"] = a["result"].upper()
             self.d.data.put(self.data_json)
             time.sleep(0.1)
 
