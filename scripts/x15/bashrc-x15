@@ -17,51 +17,70 @@ alias ls='ls $LS_OPTIONS'
 # alias cp='cp -i'
 # alias mv='mv -i'
 
-export PATH=/opt/EMSTS/scripts/bbb:$PATH;
+# _BOARD=bbb
+_BOARD=x15
 
-function emmc() {
-	blkdev -o 1048576 -b 512 /dev/mmcblk1 /bin/bash && echo "========== OK =========="
-}
+export PATH=/opt/EMSTS/scripts/$_BOARD:$PATH;
+source /opt/EMSTS/scripts/$_BOARD/aux-funcs
 
-function usb() {
-	storage /media/1 /dev/sda1 && echo "========== OK =========="
+function esata() {
+	storage -p "devices/platform/44000000.ocp/4a140000.sata" && echo "========== OK =========="
 }
 
 function ether() {
-	ping www.china.com
+	auto_ethernet && echo "========== OK =========="
 }
 
-function wl1807() {
-	ifconfig SoftAp0 | egrep "ether "
+function usbhost() {
+	storage -p "devices/platform/44000000.ocp/48880000.omap_dwc3_1/48890000.usb/xhci-hcd.1.auto/usb1/1-1/1-1.1/" && \
+	storage -p "devices/platform/44000000.ocp/48880000.omap_dwc3_1/48890000.usb/xhci-hcd.1.auto/usb1/1-1/1-1.2/" && \
+	storage -p "devices/platform/44000000.ocp/48880000.omap_dwc3_1/48890000.usb/xhci-hcd.1.auto/usb1/1-1/1-1.3/" && \
+	echo "========== OK =========="
 }
 
-function fram() {
-	redir_mtd
+function usbdev() {
+	ping -c 2 -I usb0 192.168.7.1 && {
+		echo "========== OK =========="
+		return 0
+	}
+	return 1
+}
+
+function emmc() {
+	_emmc_dev=`emmc_dev_get`
+	[ "$_emmc_dev" ] || {
+		echo "========== ERR =========="
+		return 1
+	}
+	blkdev -o 1048576 -b 512 $_emmc_dev /bin/bash && echo "========== OK =========="
+}
+
+# function leds
+
+# function dbguart () { auto_uart }
+
+function audio_io() {
+	snd-card-chk -n BeagleBoardX15  -s 440 /opt/backup/sine-fix-440hz.wav && {
+		echo "========== OK =========="
+	}
+}
+
+function exp_pcie() {
+	test -e /sys/class/net/wlan0 && echo "========== OK =========="
+}
+
+function exp_2mic() {
+	snd-card-chk -n seeed2micvoicec -s 440 /opt/backup/sine-fix-440hz.wav && {
+		echo "========== OK =========="
+	}
 }
 
 function eeprom() {
 	eeprom-wp
 }
 
-function can() {
-	config-pin P9_19 can;config-pin P9_20 can;gpio set 81;can_pairs can0,can1 can0,can2 can1,can2
-}
-
-function rs485() {
-	gpio set 67; gpio set 69; tty_pairs ttyO1,ttyO4
-}
-
-function jumper() {
-	gpio_button JMP1-J10=72 JMP2-J9=86 JMP3-J8=88
-}
-
-function button() {
-	gpio_button RESET=19 SW2=104 SW3=103 SW4=18
-}
-
-function pwmtest() {
-	gpio set 9
-	pwm 1 A 3 8000
+function uart8_9() {
+	tty_pairs ttyS0,ttyS1 && rcts_pairs.py ttyS0,ttyS1
 }
 
 function i2c() {
@@ -93,13 +112,5 @@ function erase_rtcw_flag() {
 	echo -ne "\xFF\xFF\xFF\xFF" > $file_erased
 	dd if=$file_erased of=$eeprom bs=1 seek=256
 	hexdump -C -v -n 16 -s 0x100 $eeprom
-}
-
-function dinput() {
-	while true; do echo $(gpio input 57;gpio input 59); sleep 1; done
-}
-
-function rst() {
-	gpio clear 19
 }
 
