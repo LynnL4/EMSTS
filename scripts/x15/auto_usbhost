@@ -1,0 +1,7 @@
+#!/bin/bash
+
+source $HOME/.bashrc
+
+usbhost
+exit $?
+
