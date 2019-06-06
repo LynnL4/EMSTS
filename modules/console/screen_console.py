@@ -33,7 +33,7 @@ class console:
         self.data_json = {}           
     def log(self,*args):
         for a in args:
-            #只要有一项测试出错，测试失败
+            # Failed on any one item failing
             if a["result"] != "ok" and a["result"] != "listen" and  a["result"] != "watch": 
                 if self.t == True:
                     self.t = False

@@ -8,7 +8,6 @@ import time
 #   pip install pyserial
 import serial
 
-new_line = b'\r\n'
 baud_rate = 115200
 
 def rts_cts_check(tty_a, tty_b):

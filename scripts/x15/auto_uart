@@ -1,0 +1,18 @@
+#!/bin/bash
+
+ttyd=ttyS2
+ttydev=/dev/$ttyd
+
+systemctl stop "serial-getty@${ttyd}.service"
+stty -F $ttydev 115200 raw -onlcr -iexten -echo -echoe -echok -echoctl -echoke
+
+# '\r' couldn't be processed by 'command replacement'
+status=$(echo -ne AT | serial_rw.py $ttydev | tr '\r' '\n')
+# status=${status:0:2}
+echo UART return @$status@
+[ "$status" = "AT" ]; r="$?"
+
+systemctl start "serial-getty@${ttyd}.service"
+
+exit $r
+
