@@ -16,7 +16,7 @@ function get_gateway() {
 	local inf
 
 	inf=${1:-eth0}
-	route -n | grep $inf | grep "UG " | awk '{print $2}'
+	route -n | egrep -m1 "UG " | awk '{print $2}'
 	return 0
 }
 
