@@ -1,0 +1,122 @@
+#!/bin/bash
+# tary, 2018-08-07
+
+source ~/.bashrc
+
+LED0="/sys/class/leds/beaglebone:green:usr0/brightness"
+LED1="/sys/class/leds/beaglebone:green:usr1/brightness"
+LED2="/sys/class/leds/beaglebone:green:usr2/brightness"
+LED3="/sys/class/leds/beaglebone:green:usr3/brightness"
+
+function local_initial() {
+	echo "##### $0 Starting up #####"
+
+	killall sleep
+	sleep 1
+
+	# initial cat for can & rs485
+	killall cat
+
+	while true; do
+		for i in $LED0 $LED1 $LED2 $LED3; do
+			echo 0 > $i
+		done
+		sleep 1
+		for i in $LED0 $LED1 $LED2 $LED3; do
+			echo 1 > $i
+		done
+		sleep 1
+	done &
+
+	config-pin P8_07 low
+	config-pin P8_08 low
+	config-pin P8_09 low
+	config-pin P8_10 low
+	config-pin P8_13 low
+	config-pin P8_19 low
+	config-pin P8_27 low
+	config-pin P8_28 low
+	config-pin P8_29 low
+	config-pin P8_30 low
+	config-pin P8_31 low
+	config-pin P8_32 low
+	config-pin P8_33 low
+	config-pin P8_34 low
+	config-pin P8_35 low
+	config-pin P8_36 low
+	config-pin P8_37 low
+	config-pin P8_38 low
+	config-pin P8_39 low
+	config-pin P8_40 low
+	config-pin P8_41 low
+	config-pin P8_42 low
+	config-pin P8_43 low
+	config-pin P8_44 low
+	config-pin P8_45 low
+	config-pin P8_46 low
+	config-pin P9_11 low
+	config-pin P9_13 low
+	config-pin P9_14 low
+	# config-pin P9_15 low
+	config-pin P9_16 low
+	config-pin P9_17 low
+	config-pin P9_18 low
+	config-pin P9_21 low
+	config-pin P9_22 low
+	config-pin P9_23 low
+	config-pin P9_24 low
+	config-pin P9_25 low
+	config-pin P9_26 low
+	config-pin P9_27 low
+	config-pin P9_41 low
+	# config-pin P9_42 low
+	# config-pin P9_91 low
+	# config-pin P9_92 low
+}
+
+function local_loop() {
+	local rv
+
+	rv=0
+	msg=`ping -c 1 www.china.com`; r=$?
+	if [ $r -ne 0 ]; then
+		echo PING:$msg
+		rv=$(( rv + 1 ))
+	fi
+
+	msg=`storage /media/1 /dev/sda /dev/sda1 2>/dev/null`; r=$?
+	if [ $r -ne 0 ]; then
+		echo UDISK:$msg
+		rv=$(( rv + 1 ))
+	fi
+
+	msg=`storage /media/1 /dev/mmcblk0p1 2>/dev/null`; r=$?
+	if [ $r -ne 0 ]; then
+		echo SDCARD:$msg
+		rv=$(( rv + 1 ))
+	fi
+	return $rv
+}
+
+function local_intr() {
+	local logf
+
+	logf=$1
+	logbf=$(basename $logf)
+
+	echo DATE:`date`
+	LAST_PWD=$OLDPWD
+
+: <<'comment-lines-end'
+	# commit logs
+	cd /opt/logs
+	git pull origin
+
+	cp $logf $logbf
+	git add $logbf
+	git commit -m "`date`: $logbf"
+	git push origin
+
+	cd $LAST_PWD
+comment-lines-end
+}

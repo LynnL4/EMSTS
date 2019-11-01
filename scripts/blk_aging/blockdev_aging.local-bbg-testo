@@ -1,0 +1,92 @@
+#!/bin/bash
+# tary, 2018-08-07
+
+source ~/.bashrc
+source /opt/EMSTS/scripts/bbb/aux-funcs 
+
+LED0="/sys/class/leds/beaglebone:green:usr0/brightness"
+LED1="/sys/class/leds/beaglebone:green:usr1/brightness"
+LED2="/sys/class/leds/beaglebone:green:usr2/brightness"
+LED3="/sys/class/leds/beaglebone:green:usr3/brightness"
+
+echo none > /sys/class/leds/beaglebone:green:usr3/trigger
+echo none > /sys/class/leds/beaglebone:green:usr2/trigger
+echo none > /sys/class/leds/beaglebone:green:usr1/trigger
+echo none > /sys/class/leds/beaglebone:green:usr0/trigger
+
+function local_initial() {
+	echo "##### $0 Starting up #####"
+
+	killall sleep
+	sleep 1
+
+	# initial cat for can & rs485
+	killall cat
+
+	while true; do
+		for i in $LED0; do
+			echo 0 > $i
+		done
+		sleep 1
+		for i in $LED0; do
+			echo 1 > $i
+		done
+		sleep 1
+	done &
+}
+
+function local_loop() {
+	local rv
+
+	rv=0
+	msg=`ping -c 1 $(get_gateway)`; r=$?
+	if [ $r -ne 0 ]; then
+		echo PING:$msg
+		rv=$(( rv + 1 ))
+		echo 0 > $LED3
+	else
+		echo 1 > $LED3
+	fi
+
+	msg=`storage /media/1 /dev/sda /dev/sda1 2>/dev/null`; r=$?
+	if [ $r -ne 0 ]; then
+		echo UDISK1:$msg
+		rv=$(( rv + 1 ))
+		echo 0 > $LED2
+	else
+		echo 1 > $LED2
+	fi
+
+	msg=`storage /media/2 /dev/sdb /dev/sdb1 2>/dev/null`; r=$?
+	if [ $r -ne 0 ]; then
+		echo UDISK2:$msg
+		rv=$(( rv + 1 ))
+		echo 0 > $LED1
+	else
+		echo 1 > $LED1
+	fi
+	return $rv
+}
+
+function local_intr() {
+	local logf
+
+	logf=$1
+	logbf=$(basename $logf)
+
+	echo DATE:`date`
+	LAST_PWD=$OLDPWD
+
+: <<'comment-lines-end'
+	# commit logs
+	cd /opt/logs
+	git pull origin
+
+	cp $logf $logbf
+	git add $logbf
+	git commit -m "`date`: $logbf"
+	git push origin
+
+	cd $LAST_PWD
+comment-lines-end
+}
