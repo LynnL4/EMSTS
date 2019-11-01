@@ -5,7 +5,8 @@ After=local-fs.target
 [Service]
 User=root
 Type=oneshot
-ExecStart=/bin/bash /home/debian/blockdev_aging -i 3 /dev/mmcblk1 /bin/busybox
+# ExecStart=/bin/bash /usr/local/bin/blockdev_aging -i 3 /dev/mmcblk1 /bin/busybox
+ExecStart=/bin/bash /usr/local/bin/blockdev_aging -i 3
 
 [Install]
 WantedBy=multi-user.target

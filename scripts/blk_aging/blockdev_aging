@@ -9,7 +9,8 @@ logf=/var/log/$(basename $0).log
 interval=1
 
 help_msg() {
-	echo "$0 [-l log_file] [-i interval ] [-c] [-h] <dev_file> <file to write>";
+	# echo "$0 [-l log_file] [-i interval ] [-c] [-h] <dev_file> <file to write>";
+	echo "$0 [-l log_file] [-i interval ] [-c] [-h]";
 	echo "  log_file default to $logf"
 	echo "  -c clear log"
 	echo "  interval default 1 \(minute\)"
@@ -25,6 +26,7 @@ while getopts "l:ci:h" opt; do
 	esac
 done
 
+: <<'EOF'
 eval devf="\$$OPTIND"
 [ -z "$devf" -o ! -e "$devf" ] && {
 	echo "Error: invalid dev_file $devf!"
@@ -37,6 +39,7 @@ eval wrf="\$$OPTIND"
 	echo "Error: invalid <file to write> $wrf"
 	exit 2;
 }
+EOF
 
 echo "logfile: ${logf}"
 echo "interval: ${interval} minutes"
