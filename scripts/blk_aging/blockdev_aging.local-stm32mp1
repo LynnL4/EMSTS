@@ -104,6 +104,14 @@ function local_loop() {
 		echo SDCARD:$msg
 		rv=$(( rv + 1 ))
 	fi
+
+	ap_count=$(iw wlan0 scan | egrep "^BSS|signal:" | wc -l)
+	msg=`test "$ap_count" -ne 0`; r=$?
+	if [ $r -ne 0 ]; then
+		echo WLAN:$msg
+		rv=$(( rv + 1 ))
+	fi
+
 	return $rv
 }
 
