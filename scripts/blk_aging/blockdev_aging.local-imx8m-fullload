@@ -1,0 +1,110 @@
+#!/bin/bash
+# tary, 2018-08-07
+
+source ~/.bashrc
+source /opt/EMSTS/scripts/bbb/aux-funcs 
+
+LED0="/sys/class/leds/mmc0::/brightness"
+LED1="/sys/class/leds/mmc1::/brightness"
+LED2="/dev/null"
+LED3="/dev/null"
+
+function local_initial() {
+	echo "##### $0 Starting up #####"
+
+	killall sleep
+	sleep 1
+
+	while true; do
+		for i in $LED0 $LED1 $LED2 $LED3; do
+			echo 0 > $i
+		done
+		sleep 1
+		for i in $LED0 $LED1 $LED2 $LED3; do
+			echo 1 > $i
+		done
+		sleep 1
+	done &
+
+}
+
+function local_loop() {
+	local rv
+
+	echo "scale=3500; 4*a(1)" | bc -l &
+	idc1=$!
+	echo "scale=3500; 4*a(1)" | bc -l &
+	idc2=$!
+	echo "scale=3500; 4*a(1)" | bc -l &
+	idc3=$!
+	echo "scale=3500; 4*a(1)" | bc -l &
+	idc4=$!
+
+	ping -s 65000 -c 3 -I eth0 $(get_gateway) &
+	id1=$!
+
+	storage /media/1 /dev/sda /dev/sda1 2>/dev/null &
+	id2=$!
+
+	storage /media/2 /dev/mmcblk0p3 2>/dev/null &
+	id3=$!
+
+	aplay /usr/share/sounds/alsa/*.wav 2>/dev/null &
+	id4=$!
+
+	rv=0
+
+	wait $id1;r=$?
+	msg="ping error"
+	if [ $r -ne 0 ]; then
+		echo PING:$msg
+		rv=$(( rv + 1 ))
+	fi
+
+	wait $id2;r=$?
+	msg="UDISK error"
+	if [ $r -ne 0 ]; then
+		echo UDISK:$msg
+		rv=$(( rv + 1 ))
+	fi
+
+	wait $id3;r=$?
+	msg="SDCARD error"
+	if [ $r -ne 0 ]; then
+		echo SDCARD:$msg
+		rv=$(( rv + 1 ))
+	fi
+
+	wait $id4; r=$?
+	msg="SOUND error"
+	if [ $r -ne 0 ]; then
+		echo SOUND:$msg
+		rv=$(( rv + 1 ))
+	fi
+
+	wait $idc1 $idc2 $idc3 $idc4
+	return $rv
+}
+
+function local_intr() {
+	local logf
+
+	logf=$1
+	logbf=$(basename $logf)
+
+	echo DATE:`date`
+	LAST_PWD=$OLDPWD
+
+: <<'comment-lines-end'
+	# commit logs
+	cd /opt/logs
+	git pull origin
+
+	cp $logf $logbf
+	git add $logbf
+	git commit -m "`date`: $logbf"
+	git push origin
+
+	cd $LAST_PWD
+comment-lines-end
+}
