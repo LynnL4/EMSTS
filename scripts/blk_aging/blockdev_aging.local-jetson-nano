@@ -1,0 +1,133 @@
+#!/bin/bash
+# tary, 2018-08-07
+
+source ~/.bashrc
+source /opt/EMSTS/scripts/bbb/aux-funcs
+
+#LED0="/sys/class/leds/mmc0::/brightness"
+LED0="/dev/null"
+LED1="/sys/class/leds/pwr/brightness"
+LED2="/dev/null"
+LED3="/dev/null"
+
+function local_initial() {
+	echo "##### $0 Starting up #####"
+
+	killall sleep
+	sleep 1
+
+	while true; do
+		for i in $LED0 $LED1 $LED2 $LED3; do
+			echo 0 > $i
+		done
+		sleep 1
+		for i in $LED0 $LED1 $LED2 $LED3; do
+			echo 1 > $i
+		done
+		sleep 1
+	done &
+
+	# Vibration motor
+	while true; do
+		gpio set 168
+		sleep 300
+		gpio clear 168
+		sleep 900
+	done &
+
+	# LTE
+	/home/peter/git/linux-ppp-scripts/quectel-onoff.sh
+
+	# GPS
+	gpio set 51; sleep 0.01; gpio set 12; sleep 0.1; gpio clear 12; sleep 0.01; gpio clear 51;
+
+	# LSM6DS3
+	export PYTHONPATH=/home/peter/git/LSM6DS3/src
+
+	cd /home/peter/git/LSM6DS3;
+}
+
+function local_loop() {
+	local rv
+
+	echo "scale=3500; 4*a(1)" | bc -l &
+	idc1=$!
+	echo "scale=3500; 4*a(1)" | bc -l &
+	idc2=$!
+	echo "scale=3500; 4*a(1)" | bc -l &
+	idc3=$!
+	echo "scale=3500; 4*a(1)" | bc -l &
+	idc4=$!
+
+	ping -s 65000 -c 3 -I eth0 $(get_gateway) &
+	id1=$!
+
+	storage /mnt/1 /dev/sda /dev/sda1 2>/dev/null &
+	id2=$!
+
+	true; # storage /media/2 /dev/mmcblk0p3 2>/dev/null &
+	id3=$!
+
+	aplay -D plughw:1,0 -f S32_LE -r 48000 -c 2 /home/peter/Summertime-short-32.wav 2>/dev/null &
+	id4=$!
+
+	python3 examples/example_poll.py &
+	id5=$!
+
+	rv=0
+
+	wait $id1;r=$?
+	msg="ping error"
+	if [ $r -ne 0 ]; then
+		echo PING:$msg
+		rv=$(( rv + 1 ))
+	fi
+
+	wait $id2;r=$?
+	msg="UDISK error"
+	if [ $r -ne 0 ]; then
+		echo UDISK:$msg
+		rv=$(( rv + 1 ))
+	fi
+
+	wait $id3;r=$?
+	msg="SDCARD error"
+	if [ $r -ne 0 ]; then
+		echo SDCARD:$msg
+		rv=$(( rv + 1 ))
+	fi
+
+	wait $idc1 $idc2 $idc3 $idc4
+	kill -9 $id4 $id5
+	wait $id4; r=$?
+	msg="SOUND error"
+	if [ $r -ne 0 ]; then
+		echo SOUND:$msg
+		rv=$(( rv + 1 ))
+	fi
+
+	return $rv
+}
+
+function local_intr() {
+	local logf
+
+	logf=$1
+	logbf=$(basename $logf)
+
+	echo DATE:`date`
+	LAST_PWD=$OLDPWD
+
+: <<'comment-lines-end'
+	# commit logs
+	cd /opt/logs
+	git pull origin
+
+	cp $logf $logbf
+	git add $logbf
+	git commit -m "`date`: $logbf"
+	git push origin
+
+	cd $LAST_PWD
+comment-lines-end
+}
