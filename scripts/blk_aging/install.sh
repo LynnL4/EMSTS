@@ -5,7 +5,7 @@ if [[ $EUID -ne 0 ]]; then
 	exit 1
 fi
 
-cp blockdev_aging       /usr/local/bin/
+install --mode 0755 blockdev_aging /usr/local/bin/
 [ -f blockdev_aging.local ] || {
 	echo "Prepare a blockdev_aging.local script" 1>&2
 	exit 2

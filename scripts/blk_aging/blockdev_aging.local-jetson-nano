@@ -36,7 +36,17 @@ function local_initial() {
 	done &
 
 	# LTE
-	/home/peter/git/linux-ppp-scripts/quectel-onoff.sh
+	while true; do
+		if ! ifconfig ppp0 >&/dev/null; then
+			killall pppd
+			sleep 1
+			python3 /home/peter/vehicle-examples/quectel-onoff.py || {
+				python3 /home/peter/vehicle-examples/quectel-onoff.py
+			}
+			pppd call quectel &
+		fi
+		sleep 10
+	done &
 
 	# GPS
 	gpio set 51; sleep 0.01; gpio set 12; sleep 0.1; gpio clear 12; sleep 0.01; gpio clear 51;
@@ -50,6 +60,7 @@ function local_initial() {
 function local_loop() {
 	local rv
 
+	{
 	echo "scale=3500; 4*a(1)" | bc -l &
 	idc1=$!
 	echo "scale=3500; 4*a(1)" | bc -l &
@@ -58,8 +69,11 @@ function local_loop() {
 	idc3=$!
 	echo "scale=3500; 4*a(1)" | bc -l &
 	idc4=$!
+	} >&/dev/null
 
-	ping -s 65000 -c 3 -I eth0 $(get_gateway) &
+	# ping -s 65000 -c 3 -I eth0 $(get_gateway) &
+	DNS=$(systemd-resolve --status | egrep "DNS Servers:" | awk -F':' '{ printf $2; }')
+	ping -c 2 -I ppp0 $DNS &
 	id1=$!
 
 	storage /mnt/1 /dev/sda /dev/sda1 2>/dev/null &
@@ -68,16 +82,19 @@ function local_loop() {
 	true; # storage /media/2 /dev/mmcblk0p3 2>/dev/null &
 	id3=$!
 
-	aplay -D plughw:1,0 -f S32_LE -r 48000 -c 2 /home/peter/Summertime-short-32.wav 2>/dev/null &
+	aplay -D plughw:1,0 -f S32_LE -r 48000 -c 2 /home/peter/Summertime-short-32.wav >&/dev/null &
 	id4=$!
 
-	python3 examples/example_poll.py &
+	python3 examples/example_poll.py >/dev/null 2>&1 &
 	id5=$!
 
 	rv=0
 
+	sleep 3
+	ps -ef | egrep "[a]play" >&/dev/null; rid=$?
+
 	wait $id1;r=$?
-	msg="ping error"
+	msg="PING error"
 	if [ $r -ne 0 ]; then
 		echo PING:$msg
 		rv=$(( rv + 1 ))
@@ -99,7 +116,7 @@ function local_loop() {
 
 	wait $idc1 $idc2 $idc3 $idc4
 	kill -9 $id4 $id5
-	wait $id4; r=$?
+	wait $id4; r=$rid
 	msg="SOUND error"
 	if [ $r -ne 0 ]; then
 		echo SOUND:$msg
