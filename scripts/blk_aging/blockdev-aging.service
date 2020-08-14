@@ -4,7 +4,8 @@ After=local-fs.target
 
 [Service]
 User=root
-Type=oneshot
+# Type=oneshot
+Type=exec
 # ExecStart=/bin/bash /usr/local/bin/blockdev_aging -i 3 /dev/mmcblk1 /bin/busybox
 ExecStart=/bin/bash /usr/local/bin/blockdev_aging -i 3
 
