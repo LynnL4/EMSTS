@@ -113,17 +113,21 @@ def main():
 
             end_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
             time.sleep(1)
-            index_btldr = ss.expect(pattern=['Trying to boot from MMC1', pexpect.TIMEOUT], timeout = TIMEOUT_PWROFF)
+            index_btldr = ss.expect(pattern=['U-Boot ', pexpect.TIMEOUT], timeout = TIMEOUT_PWROFF)
             if index_btldr == 0:
                 fail_cnt = fail_cnt + 1
-                print('This test is\033[1;31m fail\033[0m!')
-                f.write("This test is fail!\r\n")
+                print('____________________________________')
+                print('****** \033[5;31;43m POWER OFF FAILED \033[0m')
+                print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                f.write("POWEROFF FAILED!\r\n")
 
             elif index_btldr == 1:  # time out = success
                 success_cnt = success_cnt + 1
                 is_repower = True
-                print("This test is successful!")
-                f.write("This test is successful!\r\n")
+                print('____________________________________')
+                print('###### \033[1;42m POWER OFF OK! \033[0m')
+                print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                f.write("POWEROFF OK!\r\n")
             # print(ss.before)
 
             print("total_cnt   :", total_cnt)
