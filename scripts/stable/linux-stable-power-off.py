@@ -25,12 +25,16 @@ import chardet
 
 # pin 6
 Pin_Relay = 6
+# Pin_Relay = 5
 LVL_RELAY_OFF = GPIO.HIGH
 LVL_RELAY_ON  = GPIO.LOW
 
-TIMEOUT_LOGIN = 45 # Seconds
-TIMEOUT_SHELL = 5
-TIMEOUT_PWROFF= 12
+# off_secs --- The time for DC capacitor discharging
+DC_OFF_SECS     = 8
+TIMEOUT_LOGIN   = 45 # Seconds
+TIMEOUT_SHELL   = 8
+SHELL_TO_PWROFF = 1
+TIMEOUT_PWROFF  = 12
 # HOSTNAME = 'beaglebone'
 HOSTNAME = 'SCHNEIDER2'
 
@@ -39,9 +43,9 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 GPIO.setup(Pin_Relay, GPIO.OUT)
 
-def power_cycle(off_secs = 2):
+def power_cycle():
     GPIO.output(Pin_Relay, LVL_RELAY_OFF)
-    time.sleep(off_secs)
+    time.sleep(DC_OFF_SECS)
     GPIO.output(Pin_Relay, LVL_RELAY_ON)
 
 is_repower = False
@@ -56,6 +60,12 @@ def main():
 
         logfile = time.strftime("LINUX-LOG-%Y-%m-%d-%H.txt", time.localtime())
         f = open(logfile, 'a')
+
+        f.write("DC_OFF_SECS      = {}\n".format(DC_OFF_SECS))
+        f.write("TIMEOUT_LOGIN    = {}\n".format(TIMEOUT_LOGIN))
+        f.write("TIMEOUT_SHELL    = {}\n".format(TIMEOUT_SHELL))
+        f.write("SHELL_TO_PWROFF  = {}\n".format(SHELL_TO_PWROFF))
+        f.write("TIMEOUT_PWROFF   = {}\n".format(TIMEOUT_PWROFF))
 
         power_cycle()
         start_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
@@ -95,6 +105,7 @@ def main():
             ss.sendline()
             index_shell = ss.expect(pattern=['root@' + HOSTNAME + ':', pexpect.TIMEOUT], timeout = TIMEOUT_SHELL)
             if index_shell == 0:  # normal
+                time.sleep(SHELL_TO_PWROFF)
                 ss.sendline('poweroff')
             elif index_shell == 1:  # device get stuck
                 print("Device get stuck in index_shell.")
@@ -114,8 +125,8 @@ def main():
             total_cnt = total_cnt + 1
             is_repower = False
 
-            end_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
             time.sleep(1)
+            end_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
             index_btldr = ss.expect(pattern=['U-Boot ', pexpect.TIMEOUT], timeout = TIMEOUT_PWROFF)
             if index_btldr == 0:
                 fail_cnt = fail_cnt + 1
