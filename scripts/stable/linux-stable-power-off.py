@@ -34,7 +34,7 @@ DC_OFF_SECS     = 8
 TIMEOUT_LOGIN   = 45 # Seconds
 TIMEOUT_SHELL   = 8
 SHELL_TO_PWROFF = 1
-TIMEOUT_PWROFF  = 12
+TIMEOUT_PWROFF  = 10
 # HOSTNAME = 'beaglebone'
 HOSTNAME = 'SCHNEIDER2'
 
@@ -105,14 +105,32 @@ def main():
             ss.sendline()
             index_shell = ss.expect(pattern=['root@' + HOSTNAME + ':', pexpect.TIMEOUT], timeout = TIMEOUT_SHELL)
             if index_shell == 0:  # normal
-                time.sleep(SHELL_TO_PWROFF)
-                ss.sendline('poweroff')
+                pass
             elif index_shell == 1:  # device get stuck
                 print("Device get stuck in index_shell.")
                 f.write("Device get stuck in index_shell.\r\n")
                 power_cycle()
-                continue;
+                continue
 
+            # Wait for system startup complete
+            """
+            for i in range(SHELL_TO_PWROFF):
+                ss.sendline('systemd-analyze time')
+                index_analyze = ss.expect(pattern=['Startup finished', pexpect.TIMEOUT], timeout = 1)
+                if index_analyze == 0:
+                    break
+                time.sleep(1)
+
+            time.sleep(5)
+            ss.sendline('ifconfig wlan0 down')
+            time.sleep(0.5)
+            ss.sendline('rmmod wlcore_sdio')
+            time.sleep(SHELL_TO_PWROFF - 5)
+            """
+            time.sleep(SHELL_TO_PWROFF)
+
+            time.sleep(0.1)
+            ss.sendline('poweroff')
             '''record log'''
             # data = ss.before
             # ret = chardet.detect(data)
@@ -125,9 +143,9 @@ def main():
             total_cnt = total_cnt + 1
             is_repower = False
 
-            time.sleep(1)
             end_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-            index_btldr = ss.expect(pattern=['U-Boot ', pexpect.TIMEOUT], timeout = TIMEOUT_PWROFF)
+            index_pwroff = ss.expect(pattern=['reboot: Power down', pexpect.TIMEOUT], timeout = TIMEOUT_PWROFF)
+            index_btldr = ss.expect(pattern=['U-Boot ', pexpect.TIMEOUT], timeout = 4)
             if index_btldr == 0:
                 fail_cnt = fail_cnt + 1
                 print('____________________________________')

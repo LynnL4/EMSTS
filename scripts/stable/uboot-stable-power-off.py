@@ -28,18 +28,20 @@ Pin_Relay = 6
 LVL_RELAY_OFF = GPIO.HIGH
 LVL_RELAY_ON  = GPIO.LOW
 
-TIMEOUT_LOGIN = 5 # Seconds
-TIMEOUT_SHELL = 5
-TIMEOUT_PWROFF= 10
+# off_secs --- The time for DC capacitor discharging
+DC_OFF_SECS     = 8
+TIMEOUT_LOGIN   = 5 # Seconds
+TIMEOUT_SHELL   = 5
+TIMEOUT_PWROFF  = 10
 
 # GPIO.setmode(GPIO.BOARD)
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 GPIO.setup(Pin_Relay, GPIO.OUT)
 
-def power_cycle(off_secs = 2):
+def power_cycle():
     GPIO.output(Pin_Relay, LVL_RELAY_OFF)
-    time.sleep(off_secs)
+    time.sleep(DC_OFF_SECS)
     GPIO.output(Pin_Relay, LVL_RELAY_ON)
 
 is_repower = False
@@ -52,8 +54,13 @@ def main():
         success_cnt = 0
         fail_cnt = 0
 
-        logfile = time.strftime("UBOOT-LOG-%Y-%m-%d.txt", time.localtime())
+        logfile = time.strftime("UBOOT-LOG-%Y-%m-%d-%H.txt", time.localtime())
         f = open(logfile, 'a')
+
+        f.write("DC_OFF_SECS      = {}\n".format(DC_OFF_SECS))
+        f.write("TIMEOUT_LOGIN    = {}\n".format(TIMEOUT_LOGIN))
+        f.write("TIMEOUT_SHELL    = {}\n".format(TIMEOUT_SHELL))
+        f.write("TIMEOUT_PWROFF   = {}\n".format(TIMEOUT_PWROFF))
 
         power_cycle()
         start_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
@@ -93,13 +100,18 @@ def main():
             ss.sendline()
             index_shell = ss.expect(pattern=['=>', pexpect.TIMEOUT], timeout = TIMEOUT_SHELL)
             if index_shell == 0:  # normal
-                ss.sendline('poweroff')
+                pass
             elif index_shell == 1:  # device get stuck
                 print("Device get stuck in index_shell.")
                 f.write("Device get stuck in index_shell.\r\n")
                 power_cycle()
                 continue;
 
+            ss.sendline('setenv ipaddr 192.168.4.58')
+            time.sleep(0.2)
+            ss.sendline('ping 192.168.4.2')
+            time.sleep(2.0)
+            ss.sendline('poweroff')
             '''record log'''
             # ret = chardet.detect(data)
             # print(ret)
