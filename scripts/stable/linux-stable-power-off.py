@@ -29,14 +29,17 @@ Pin_Relay = 6
 LVL_RELAY_OFF = GPIO.HIGH
 LVL_RELAY_ON  = GPIO.LOW
 
+# TEST Network
+TEST_NETWORK = False
+
 # off_secs --- The time for DC capacitor discharging
 DC_OFF_SECS     = 8
 TIMEOUT_LOGIN   = 45 # Seconds
 TIMEOUT_SHELL   = 8
 SHELL_TO_PWROFF = 1
-TIMEOUT_PWROFF  = 10
-# HOSTNAME = 'beaglebone'
-HOSTNAME = 'SCHNEIDER2'
+TIMEOUT_PWROFF  = 20
+HOSTNAME = 'beaglebone'
+# HOSTNAME = 'SCHNEIDER2'
 
 # GPIO.setmode(GPIO.BOARD)
 GPIO.setmode(GPIO.BCM)
@@ -144,14 +147,29 @@ def main():
             time.sleep(0.5)
             ss.sendline('rmmod wlcore_sdio')
             time.sleep(SHELL_TO_PWROFF - 5)
+            ss.sendline('cpufreq-set -g userspace')
+            time.sleep(0.1)
+            ss.sendline('cpufreq-set -f 300MHz')
             """
+            result_success = False
+            if TEST_NETWORK:
+                time.sleep(0.5)
+                ss.sendline('ifconfig eth0 192.168.4.252')
+                time.sleep(2)
+                ss.sendline('ping -c 4 192.168.4.2')
+                index_ping = ss.expect(pattern=['64 bytes from 192.168.4.2', pexpect.TIMEOUT], timeout = 4)
+                # print("index_ping = {}\n".format(index_ping))
+                if index_ping == 0:
+                    # found response, OK
+                    result_success = True
+
             time.sleep(SHELL_TO_PWROFF)
 
             time.sleep(0.1)
             ss.sendline('poweroff')
 
             total_cnt = total_cnt + 1
-            is_repower = False
+            is_repower = TEST_NETWORK
 
             if first:
                 log_first += decode_all(ss)
@@ -159,15 +177,21 @@ def main():
             tm_pwrdn = time.localtime()
             if first:
                 log_first += decode_all(ss)
-            index_btldr = ss.expect(pattern=['U-Boot ', pexpect.TIMEOUT], timeout = 4)
-            if index_btldr == 0:
+
+            if not TEST_NETWORK:
+                index_btldr = ss.expect(pattern=['U-Boot ', pexpect.TIMEOUT], timeout = 4)
+                if index_btldr != 0:
+                    # no found response, OK
+                    result_success = True
+
+            if not result_success:
                 fail_cnt = fail_cnt + 1
                 print('____________________________________')
                 print('****** \033[5;31;43m POWER OFF FAILED \033[0m')
                 print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 f.write("POWEROFF FAILED!\n")
 
-            elif index_btldr == 1:  # time out = success
+            else:
                 success_cnt = success_cnt + 1
                 is_repower = True
                 print('____________________________________')
