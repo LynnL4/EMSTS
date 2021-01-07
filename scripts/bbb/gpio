@@ -12,6 +12,7 @@ function gpio() {
   local nr=$2
   local dir=out
   local v=0
+  local cdir
 
   if [ -z "$nr" ]; then
     echo -e "Usage:\n  gpio input/set/clear gpio#"
@@ -34,7 +35,10 @@ function gpio() {
     return
     :;;
   esac
-  echo $dir > $gpio_path/gpio$nr/direction
+  cdir=$(cat $gpio_path/gpio$nr/direction)
+  if [ "$dir" != "$cdir" ]; then
+    echo $dir > $gpio_path/gpio$nr/direction
+  fi
   if [ "$dir" == "out" ]; then
     echo $v > $gpio_path/gpio$nr/value
   else
