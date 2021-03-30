@@ -30,8 +30,6 @@ eval value="\$$OPTIND"
 leds_path="/sys/class/leds/"
 # leds=`find $leds_path -print | egrep -v "${filter}${leds_path}$"`
 leds_array=(                    \
-       "beaglebone:green:usr6"  \
-       "beaglebone:green:usr5"  \
        "beaglebone:green:usr0"  \
        "beaglebone:green:usr1"  \
        "beaglebone:green:usr2"  \

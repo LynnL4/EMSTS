@@ -1,1 +1,92 @@
-../bbb/storage
+#!/bin/bash
+# tary, 9:56 2013-4-17
+
+function _storage_usage() {
+	cat <<EOF
+Test a storage device such as u-disk, sd-card, sata-disk
+Syntax: $0 <mount point> <device list...>
+Examples:
+  1> u disk
+    $0 /mnt/udisk /dev/sda1 /dev/sdb1 /dev/sda /dev/sdb
+
+  2> sd/mmc card
+    $0 /mnt/card /dev/mmcblk0p1 /dev/mmcblk0 /dev/mmcblk1p1 /dev/mmcblk1
+
+  3> sata disk
+    $0 /mnt/sata /dev/sda5 /dev/sdb5
+
+  4> match sysfs path
+    $0 -p /sysfs-path -m mount-point
+EOF
+	exit 2
+}
+
+function storage_get_list() {
+	local _syspath _i
+	_syspath="$1"
+
+	for _i in $(ls -d /sys/class/block/sd[a-z]); do
+		if readlink $_i | egrep -m 1 "$_syspath" >/dev/null; then
+			# first partition device of the disk
+			echo /dev/$(basename $_i)1
+			return 0
+		fi
+	done
+	return 1
+}
+
+[ $# -lt 2 ] && {
+	_storage_usage
+}
+
+syspath=
+mount_point=/media
+while getopts "p:m:" opt; do
+	case "$opt" in
+	p)	syspath=$OPTARG;;
+	m)	mount_point=$OPTARG;;
+	h)	_storage_usage;;
+	esac
+done
+
+if [ -z "$syspath" ]; then
+	MOUNT_POINT=${1}
+	shift
+	DEV_LIST=$@
+else
+	MOUNT_POINT="$mount_point"
+	DEV_LIST=$(storage_get_list "$syspath")
+	[ -z "$DEV_LIST" ] && {
+		echo "ERROR: No disk match $syspath"
+		exit 3
+	}
+fi
+
+# echo MOUNT_POINT=${MOUNT_POINT}
+# echo DEV_LIST=${DEV_LIST}
+{
+	umount ${MOUNT_POINT}
+	mkdir ${MOUNT_POINT}
+} >/dev/null 2>&1;
+
+for name in ${DEV_LIST}; do
+	umount $name >/dev/null 2>&1;
+done
+
+f_found=0
+for name in ${DEV_LIST}
+do
+	if mount $name ${MOUNT_POINT} >/dev/null 2>&1; then
+		f_found=1
+		break
+	fi
+done
+
+[ "$f_found" -ne "0" ] || exit 1
+
+storage_tst -n 4 ${MOUNT_POINT}
+r=$?
+
+umount ${MOUNT_POINT} >/dev/null 2>&1;
+exit ${r}
+

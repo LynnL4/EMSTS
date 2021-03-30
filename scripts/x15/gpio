@@ -1,1 +1,58 @@
-../bbb/gpio
+#!/bin/bash
+# set -x
+#
+# gpio could be a function or a command
+# they have the same usage.
+
+# function
+# source gpio
+# gpio args
+function gpio() {
+  local gpio_path=/sys/class/gpio
+  local nr=$2
+  local dir=out
+  local v=0
+  local cdir
+
+  if [ -z "$nr" ]; then
+    echo -e "Usage:\n  gpio input/set/clear gpio#"
+    return
+  fi
+  [ -d $gpio_path/gpio$nr ] || echo $nr > $gpio_path/export
+  [ -d $gpio_path/gpio$nr ] || {
+    echo "Invalid gpio # $nr"
+    return
+  }
+  case "$1" in
+  clear)
+    v=0;;
+  set)
+    v=1;;
+  input)
+    dir=in;;
+  *)
+    echo -e "Usage:\n  gpio input/set/clear gpio#"
+    return
+    :;;
+  esac
+  cdir=$(cat $gpio_path/gpio$nr/direction)
+  if [ "$dir" != "$cdir" ]; then
+    echo $dir > $gpio_path/gpio$nr/direction
+  fi
+  if [ "$dir" == "out" ]; then
+    echo $v > $gpio_path/gpio$nr/value
+  else
+    cat $gpio_path/gpio$nr/value
+  fi
+  return
+}
+
+# command
+# gpio args
+if [ "${0:0:1}" != "-" ]; then
+  if [ $(basename "$0") == "gpio" -a "$1" != "" ]; then
+    # echo gpio $@
+    gpio $@
+  fi
+fi
+
